@@ -39,7 +39,7 @@
 ////  scale.get_units(10);
 //  scale.set_scale(1042.f);//1050.f original 894.f
 //  scale.tare();
-//  SerialBT.begin("DispenM V 1.3");          // Nombre dispositivo
+//  SerialBT.begin("Logiplant V1");          // Nombre dispositivo
 //  SerialBT.println("Conexion disponible");  //Serial.println("Conexion disponible");
 //  dato.reserve(200);                      //Guardo 200 bytes para datos de llegada
 //  
@@ -47,7 +47,7 @@
 //  lcd.begin(16, 2);
 //  //----------------------------------------------------------------------Saludo
 //    lcd.clear();
-//    lcd.print("DispenM V 1.3"); Serial.println("DispenM V 1.3");//blut.println("DispenM V 1.3");
+//    lcd.print("Logiplant V1"); Serial.println("DispenM V 1.3");//blut.println("DispenM V 1.3");
 //    delay(500);
 //    lcd.setCursor(0,1); 
 //    lcd.print("Iniciando dispositivo"); Serial.println("Iniciando dispositivo");SerialBT.println("Iniciando dispositivo");
@@ -58,7 +58,7 @@
 //      delay(300);}
 //  lcd.noAutoscroll();
 //  lcd.clear();
-//  //----------------------------------------------------------------------
+//  //---------------------------------------------------------------------- impresion
 //  int time = millis();
 //  lcd.print("lectura ");
 //  time = millis() - time;
@@ -70,7 +70,7 @@
 //}
 //
 //void loop() {
-//
+////----------------------------------------------impresion de valores leidos en lcd
 //if (scale.is_ready()) {
 //    //long reading = scale.read();
 //    float var=0;
@@ -108,35 +108,328 @@
 //  }
 //}//Fin loop
 
-//#define ACTION 9 // define pin 9 as for ACTION
-int pin       = A0;
+//pausa sin delay
+/*
+byte led=19;
+int boton=5;
+int lecboton=0;
+  unsigned long     inicio=0;
+  int               delta=0;
+  byte              uso=0;
+  
 
-
-
-void setup () {
-    Serial.begin (9600);
-    pinMode (pin, INPUT);
+void setup() {
+  Serial.begin(9600);
+  pinMode(boton,INPUT);
+  pinMode(led,OUTPUT);
 }
 
-void loop () {
-    int val;
-    uint16_t value = analogRead (pin);
+void loop() {
+  lecboton=digitalRead(boton);
+  unsigned long  ahora=millis();
+ if(lecboton && (uso==0)) {
+    Serial.println("boton presionado");
+    inicio=ahora;
+    Serial.println("tiempoinicial: "+String(inicio));
+    uso=1;
+  }
+  delta=ahora-inicio;
+  
+  if((delta>=5000) && (uso==1)) {
+   Serial.println("dtiempo: "+String(delta));
+   Serial.println("dtiemponow: "+String(ahora));
+   inicio=ahora;
+   uso=0;
+   }
+  if(ahora>=4294967293) {
+    inicio=0;
+  }  
+}*/
+
+//----------
+//------------------------------motor con pir
+//byte       motorPin=9;       //GPIO33 Motor
+//const int  interval=1000;     //Tiempo
+//unsigned long antes=0; 
+//byte          pir =3; 
+//
+//void setup() {
+//  Serial.begin(9600);
+//  pinMode(pir,    INPUT);
+//  pinMode(motorPin, OUTPUT);
+//
+//}
+//
+//void loop() {
+//      byte state = digitalRead(pir);
+//      unsigned long ahora = millis();
+//      if(state == 0){Serial.println("Vacio "); digitalWrite(motorPin, LOW);}
+//      else {antes=ahora+interval;
+////      while(state == 1){
+////          //if (ahora<=antes)break;
+//          Serial.print(ahora); Serial.print(" ");Serial.print(antes);
+//          Serial.println(" Bolsa ");
+//          digitalWrite(motorPin, HIGH); }  //activar rele
+////      }
+
+}
+//--------------------------motor con delay
+//const int ledPin =  9;// the number of the LED pin
+//
+//
+//int ledState = LOW;             // ledState used to set the LED
+//unsigned long previousMillis = 0;        // will store last time LED was updated
+//const long interval = 5000;           // interval at which to blink (milliseconds)
+//
+//void setup() {
+//  // set the digital pin as output:
+//  Serial.begin(9600);
+//  pinMode(ledPin, OUTPUT);
+//}
+//
+//void loop() {
+//
+//  unsigned long currentMillis = millis();
+//  Serial.println(currentMillis);
+//  if (currentMillis - previousMillis >= interval) {
+//    previousMillis = currentMillis;
+//    Serial.print(" ");Serial.println(previousMillis);
+//    if (ledState == LOW) {
+//      ledState = HIGH;
+//    } else {
+//      ledState = LOW;
+//    }
+//    digitalWrite(ledPin, ledState);
+//  }
+//}
+//
+////--------------------antirebote
+//const byte boton1=18;
+//const byte led=23;
+//byte numpulso=0;
+//
+//bool actual  = false;
+//bool anterior  = false;
+//unsigned long lastDebounceTime  = 0;
+//
+//
+//void setup() {
+//  Serial.begin(9600);
+//  Serial.println(F("Initialize System"));
+//  pinMode(boton1, INPUT);
+//  pinMode(led, OUTPUT);
+//}
+//
+//void loop() {
+//  digitalWrite(led, LOW);
+//  byte cuenta=rebote(boton1);
+//  if(  ((millis()-lastDebounceTime)<=100)&&(cuenta==1)) {digitalWrite(led, cuenta); Serial.println("estado "+String(cuenta));}
+//  lastDebounceTime = cuenta;
+//
+//}
+//
+//byte rebote(byte boton ){
+//  int lectura=digitalRead(boton);
+//  if (lectura!=anterior){
+//    lastDebounceTime = millis();
+//  }
+//  if ((millis()-lastDebounceTime)>20){ /*Tiempo de delay de estabilizacion*/
+//    if (lectura!=actual){
+//      actual=lectura;
+//      //if (actual==1){
+//        //numpulso++;
+//        //Serial.println("numpulso "+String(numpulso));}
+//      //Serial.println("Sensor state: "+String(actual));
+//    }
+//  }
+//  anterior=lectura;
+//  return (anterior);
+//}
+//----------
+
+//**-------Nuevo prog 27/04/2023
+/*1.  La persona va a ingresar las bolsas por una compuerta que se abre cuando 
+    se presiona un botón.
+2. El motor se activa cuando la compuerta se cierra y se bloquea, y el motor 
+    sigue activo 5 segundos después de que el detector de movimiento dejo de detectar.
+3. 5 segundos después de apagar el motor se permite la apertura de la escotilla.
+4. Va a preguntar si tiene más bolsas por triturar en caso de tener otras, vuelve
+    al paso 1 en caso de no tener más bolsas, va a preguntar si desea recibo o escanear 
+    el código, en caso de quererlo va a imprimir un recibo con código el cual se rija por 
+    la ubicación de la máquina, la fecha y hora, además de un código de barras con esta 
+    información para el usuario, donde se visualiza la cantidad de bolsas, la ubicación de 
+    la maquina y la fecha y hora.
+
+    Serial.printf("Value %d\n",value);
+    Serial.println("dtiempo: "+String(deltatiempo));
+    #include <arduino-timer.h>
+
+    ----*****-----*****---- graficas en pantalla
+    */
+
+#include <SPI.h>
+#include "Ucglib.h"
+#include <ESP32Servo.h>
+#include <Wire.h>  
+
+Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
+
+const byte      servo1Pin = 21;   //GPIO21 Pin SERVO
+byte            pos = 0;          //position in degrees
+const byte      boton=18;         //GPIO18 Boton de puerta
+byte            lecbot=0;         //Lectura estado boton
+byte            numbot=0;         //Numero de veces boton pulsado
+byte            numbol=0;         //Numero de bolsas
+byte            conta=0;
+const byte      seguro=19;        //GPIO19 Seguro puerta
+byte            lecseg=0;         //Lectura estado seguro
+const int       motorPin=33;      //GPIO33 Motor
+unsigned long   antes=0;
+const long      interval=5000;    //Tiempo en milesimas
+const byte      tmol=20;          //Tiempo de molido en segundos
+const int       boton2=25;        //GPIO25 Boton de recibo
+int             lecbot2=0;        //Lectura estado boton
+int             hall= 26;         //GPIO26 sensor hall
+int             impresion=27;     //Indicador de impresion
+
+Servo mervo;                      //datos servo en 21
+
+void setup(void){
+  delay(1000);
+  Serial.begin(9600);
+  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
+  ucg.setFont(ucg_font_ncenR12_hr);
+  ucg.clearScreen();
+  pinMode(boton,  INPUT);
+  pinMode(boton2,  INPUT); 
+  pinMode(seguro, INPUT);
+  pinMode(hall,   INPUT);
+  pinMode(motorPin, OUTPUT);
+  pinMode(impresion,OUTPUT);
+  mervo.attach(servo1Pin);
+  mervo.write(0);
+  attachInterrupt(digitalPinToInterrupt(boton), inter, RISING);
+  ucg.clearScreen();
+}
+
+void loop(void){
+  //ucg.clearScreen();
+  unsigned long ahora = millis();
+  Serial.printf("numbot %d\n",numbot);
+  Serial.printf("pos %d\n",pos);
+
+//****HALL   
+    uint16_t value = analogRead (hall);
     uint16_t range = get_gp2d12 (value);
+    Serial.println (value);
+    //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
+    //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
+    if (value>=2500) {
+        Serial.println("Tanque lleno ");
+        ucg.setFont(ucg_font_ncenR10_hr);
+        ucg.setColor(255, 0, 55);
+        ucg.setPrintPos(2,18); 
+        ucg.print("TANQUE LLENO "); 
+        delay(200);     
+        ucg.setColor(0, 0, 0);
+        ucg.drawBox(1, 7, 128, 13);
+    }        
+//*****HALL  FIN
 
-    val=analogRead(1);//Connect the sensor to analog pin 0
-    
-    Serial.print (value);
-    Serial.print("\t");
-    Serial.print (range);
-    Serial.print (" mm");
-    
-    Serial.print("\t");
-    Serial.println(val,DEC);
-    
-    delay (100);
+
+  lecseg= (digitalRead(seguro)); Serial.printf("lecseg %d\n",lecseg);
+  lecbot= (digitalRead(boton)); Serial.printf("lecbot %d\n",lecbot);
+//  ucg.setPrintPos(0,25);
+//  ucg.print("lecseg "); ucg.print(lecseg);
+//  ucg.setPrintPos(0,75);
+//  ucg.print("lecbot "); ucg.print(lecbot);
+//------------------------------------------------------------------Depositar material
+  while (numbot==1){                          //pulsa boton para abrir puerta para dopositar material
+  if ((lecseg==1)&&(pos==0)){                 // y cuando el seguro este desactivado, abre la puerta
+      Serial.print("abro puerta ");
+      ucg.setColor(255, 255, 255);
+      ucg.setPrintPos(2,40); 
+      ucg.print("Apertura Puerta ");
+      ucg.setColor(128, 128, 0);
+      ucg.drawBox(1, 28, 125, 17); 
+      for (pos = 1; pos <= 179; pos++) {      //ABRE PUERTA y espero a que llegue a la posición
+            mervo.write(pos);
+            delay(10);                      
+           }Serial.println(180); 
+    }break;
+  }
+  if ((numbot==2)&&(pos==180)){
+      Serial.print("cierro puerta ");
+      ucg.setColor(255, 255, 255);
+      ucg.setPrintPos(2,40); //ucg.setPrintPos(2,20); 
+      ucg.print("Cierre Puerta ");
+      ucg.setColor(128, 128, 0);
+      ucg.drawBox(1, 28, 103, 17); //ucg.drawFrame(1, 6, 95, 19); 
+      for (pos = 180; pos >= 1; pos--) {    //cierre puerta y espero a que llegue a la posición
+        mervo.write(pos);
+        delay(10);
+       }Serial.println(0); //numbot=0;//antes=ahora+interval;
+     for (int i=0;i<=tmol;i++){
+      digitalWrite(motorPin, HIGH);
+      ucg.setFont(ucg_font_ncenR10_hr);
+      ucg.setColor(255, 255, 90);
+      ucg.setPrintPos(2,18); 
+      ucg.print("PROCESANDO...");     
+      ucg.setColor(0, 0, 0);
+      ucg.drawBox(1, 7, 128, 13);
+      delay(900);}digitalWrite(motorPin, LOW);numbot=0;
+     }
+    lecseg=0;lecbot=0;
+//------------------------------------------------------------------
+//  ucg.setPrintPos(25,50);
+//  ucg.print("Boton "); ucg.println(numbot); 
+  rebote(boton);
+//  ucg.setColor(128, 128, 0);
+//  ucg.drawBox(74, 38, 17, 12);
+//-----------------------------------------------------------------Recibo
+  Serial.println("Otra bolsa presione boton 1, sino boton 2 ");
+  ucg.setColor(255, 255, 255);
+  ucg.setPrintPos(2,60); 
+  ucg.print("Bolsa? 1,");
+  ucg.setPrintPos(2,80);
+  ucg.print("Recibo? 2 ");
+  ucg.setColor(128, 128, 0);
+  ucg.drawBox(1, 45, 70, 38);
+  lecbot2= (digitalRead(boton2));
+  Serial.print(lecbot2); Serial.print(" ");
+  if(digitalRead(lecbot2)==0){
+    digitalWrite(impresion, HIGH);
+    Serial.println("Lugar "+String(ahora));
+    numbol/=2;
+    Serial.println("Bolsas "+String(numbol));
+    const String impres=("Lugar "+String(ahora));
+    ucg.setColor(255, 255, 255);
+    ucg.setPrintPos(2,110); 
+    ucg.print(impres);
+    ucg.setColor(255, 255, 255);
+    ucg.setPrintPos(110,110); 
+    ucg.print(numbol);
+    delay(500);
+    ucg.setColor(128, 128, 0);
+    ucg.drawFrame(1, 95, 127, 19);
+//---------------------------------------------------------------recibo    
+   }
+ //delay(500);  
 }
 
-uint16_t get_gp2d12 (uint16_t value) {
+//FUNCIONES
+void rebote (byte boto){
+  delay(10);
+  while(digitalRead(boto))
+  delay(10);
+  }
+  
+void inter(){  // Funcion que se ejecuta durante cada interrupion
+  numbot ++; //Serial.println(numbot);
+  numbol ++;
+}
+
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
