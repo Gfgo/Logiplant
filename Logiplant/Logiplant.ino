@@ -172,7 +172,7 @@ void loop() {
 //          digitalWrite(motorPin, HIGH); }  //activar rele
 ////      }
 
-}
+//}
 //--------------------------motor con delay
 //const int ledPin =  9;// the number of the LED pin
 //
@@ -266,22 +266,23 @@ void loop() {
 
     ----*****-----*****---- graficas en pantalla
     */
-
+#include "Adafruit_Debounce.h"
 #include <SPI.h>
 #include "Ucglib.h"
 #include <ESP32Servo.h>
 #include <Wire.h>  
 
+
 Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
 
 const byte      servo1Pin = 21;   //GPIO21 Pin SERVO
 byte            pos = 0;          //position in degrees
-const byte      boton=18;         //GPIO18 Boton de puerta
+const byte      boton=19;         //GPIO19 Boton de puerta
 byte            lecbot=0;         //Lectura estado boton
 byte            numbot=0;         //Numero de veces boton pulsado
 byte            numbol=0;         //Numero de bolsas
 byte            conta=0;
-const byte      seguro=19;        //GPIO19 Seguro puerta
+const byte      seguro=18;        //GPIO18 Seguro puerta
 byte            lecseg=0;         //Lectura estado seguro
 const int       motorPin=33;      //GPIO33 Motor
 unsigned long   antes=0;
@@ -293,16 +294,20 @@ int             hall= 26;         //GPIO26 sensor hall
 int             impresion=27;     //Indicador de impresion
 
 Servo mervo;                      //datos servo en 21
+Adafruit_Debounce btn   (boton, LOW);
+Adafruit_Debounce btn2  (seguro, LOW);
 
 void setup(void){
   delay(1000);
   Serial.begin(9600);
+  btn.begin();
+  btn2.begin();
   ucg.begin(UCG_FONT_MODE_TRANSPARENT);
   ucg.setFont(ucg_font_ncenR12_hr);
   ucg.clearScreen();
-  pinMode(boton,  INPUT);
+//  pinMode(boton,  INPUT);
   pinMode(boton2,  INPUT); 
-  pinMode(seguro, INPUT);
+//  pinMode(seguro, INPUT);
   pinMode(hall,   INPUT);
   pinMode(motorPin, OUTPUT);
   pinMode(impresion,OUTPUT);
@@ -310,10 +315,14 @@ void setup(void){
   mervo.write(0);
   attachInterrupt(digitalPinToInterrupt(boton), inter, RISING);
   ucg.clearScreen();
+  //**********************Boton
+
 }
 
 void loop(void){
   //ucg.clearScreen();
+  btn.update();
+  btn2.update();
   unsigned long ahora = millis();
   Serial.printf("numbot %d\n",numbot);
   Serial.printf("pos %d\n",pos);
@@ -383,7 +392,7 @@ void loop(void){
 //------------------------------------------------------------------
 //  ucg.setPrintPos(25,50);
 //  ucg.print("Boton "); ucg.println(numbot); 
-  rebote(boton);
+//  rebote(boton);
 //  ucg.setColor(128, 128, 0);
 //  ucg.drawBox(74, 38, 17, 12);
 //-----------------------------------------------------------------Recibo
@@ -416,13 +425,6 @@ void loop(void){
    }
  //delay(500);  
 }
-
-//FUNCIONES
-void rebote (byte boto){
-  delay(10);
-  while(digitalRead(boto))
-  delay(10);
-  }
   
 void inter(){  // Funcion que se ejecuta durante cada interrupion
   numbot ++; //Serial.println(numbot);
@@ -433,3 +435,88 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
+//**********************CAMBIO
+
+//byte             hall= A0;         //GPIO26 sensor hall
+//
+//const byte      boton=2;         //GPIO18 Boton de puerta
+//byte            lecbot=0;         //Lectura estado boton
+//
+//const byte       boton2=3;        //GPIO25 Boton de recibo
+//byte             lecbot2=0;        //Lectura estado boton
+//
+//byte            numbot=0;         //Numero de veces boton pulsado
+//byte            numbol=0;         //Numero de bolsas
+//
+//void setup() {
+//  pinMode(hall,   INPUT);      
+//  Serial.begin(9600);
+//  pinMode(boton,  INPUT);
+//  pinMode(boton2,  INPUT); 
+//    attachInterrupt(digitalPinToInterrupt(boton), inter, FALLING);
+//
+//}
+//
+//void loop() {
+//    uint16_t value = analogRead (hall);
+//    uint16_t range = get_gp2d12 (value);
+//    Serial.println (value);
+//  
+//    lecbot= (digitalRead(boton)); Serial.print("numbot ");Serial.println(numbot);
+//    lecbot2= (digitalRead(boton2)); Serial.print("numbol ");Serial.println(numbol);
+//    Serial.print("lecbot ");Serial.println(lecbot);
+//    Serial.print("lecbot2 ");Serial.println(lecbot2);
+//    
+//    delay(500);
+//
+//}
+//
+//uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+//    if (value < 10) value = 10;
+//    return ((67870.0 / (value - 3.0)) - 40.0);
+//}
+//
+//  
+//void inter(){  // Funcion que se ejecuta durante cada interrupion
+// while (lecbot==false){
+//  //delay(10);
+//  numbot ++; Serial.println(numbot);
+//  numbol ++;}
+//  
+//}
+//
+////********************************************************88
+//#include "Adafruit_Debounce.h"
+//#include <ESP32Servo.h>
+//Servo mySer;
+//
+//#define BUTTON_PIN 18
+//
+//Adafruit_Debounce button(BUTTON_PIN, LOW);
+//
+//void setup() {
+//  // Start the serial communication
+//  Serial.begin(9600);
+//  mySer.attach(21);
+//  button.begin();
+//}
+//
+//void loop() {
+//  button.update();
+//  if (button.justPressed()) {
+//    Serial.println("Button was just pressed!");
+//        for (byte i=0; i<=180;i++){
+//        mySer.write(i);
+//        delay(15);
+//        }
+//  }
+//
+//  if (button.justReleased()) {
+//    Serial.println("Button was just released!");
+//           for ( int i=180; i>=0; i--){ 
+//          mySer.write(i);
+//          delay(15);
+//          }
+//  }
+//  delay(10);
+//}

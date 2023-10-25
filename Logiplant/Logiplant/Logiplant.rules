@@ -11,12 +11,12 @@
     (via_costs 50)
     (plane_via_costs 5)
     (start_ripup_costs 100)
-    (start_pass_no 410)
+    (start_pass_no 71)
     (layer_rule F.Cu
       (active on)
       (preferred_direction vertical)
       (preferred_direction_trace_costs 1.0)
-      (against_preferred_direction_trace_costs 2.1)
+      (against_preferred_direction_trace_costs 2.2)
     )
     (layer_rule B.Cu
       (active off)
@@ -67,7 +67,7 @@
     "Net-(U2-Pad24)" "Net-(U2-Pad23)" "Net-(U2-Pad21)" "Net-(U2-Pad18)" "Net-(U2-Pad17)" "Net-(U2-Pad16)" "Net-(U2-Pad13)" "Net-(U2-Pad12)"
     "Net-(U2-Pad6)" "Net-(U2-Pad5)" "Net-(U2-Pad4)" "Net-(U2-Pad3)" "Net-(U2-Pad2)" +3V3 "Net-(U2-Pad19)" "Net-(U2-Pad38)"
     "Net-(U2-Pad7)" +5V IO26 IO27 "CD-DC" CS "MOSI-DATA" SCK
-    RST IO25 IO21 "Net-(U2-Pad22)" "Net-(U2-Pad15)"
+    RST IO25 IO21 "Net-(U2-Pad22)" "Net-(U2-Pad15)" +12V "Net-(U4-Pad5)" "Net-(U4-Pad6)"
     (clearance_class "kicad_default")
     (via_rule kicad_default)
     (rule
