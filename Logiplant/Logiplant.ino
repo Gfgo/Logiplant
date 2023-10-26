@@ -486,37 +486,58 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 //}
 //
 ////********************************************************88
-//#include "Adafruit_Debounce.h"
-//#include <ESP32Servo.h>
-//Servo mySer;
-//
-//#define BUTTON_PIN 18
-//
-//Adafruit_Debounce button(BUTTON_PIN, LOW);
-//
-//void setup() {
-//  // Start the serial communication
-//  Serial.begin(9600);
-//  mySer.attach(21);
-//  button.begin();
-//}
-//
-//void loop() {
-//  button.update();
-//  if (button.justPressed()) {
-//    Serial.println("Button was just pressed!");
-//        for (byte i=0; i<=180;i++){
-//        mySer.write(i);
-//        delay(15);
-//        }
-//  }
-//
-//  if (button.justReleased()) {
-//    Serial.println("Button was just released!");
-//           for ( int i=180; i>=0; i--){ 
-//          mySer.write(i);
-//          delay(15);
-//          }
-//  }
-//  delay(10);
-//}
+// nuevo prog 25/10
+
+#include "Adafruit_Debounce.h"
+#include <ESP32Servo.h>
+#include "Ucglib.h"
+#include <SPI.h>
+#include <Wire.h> 
+
+Servo servo;
+
+
+#define bolsapin 18
+#define seguropin 19
+
+Adafruit_Debounce bolsa(bolsapin, LOW);
+Adafruit_Debounce seguro(seguropin, LOW);
+
+byte relepin=33;  //GPIO33
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(21);
+  bolsa.begin();
+  seguro.begin();
+  pinMode(relepin,  OUTPUT);
+  digitalWrite(relepin, LOW);
+}
+
+void loop() {
+  bolsa.update();
+  seguro.update();
+  
+  
+  if (bolsa.justPressed()) {
+    Serial.println("Button was just pressed!");
+        for (byte i=0; i<=180;i++){
+        servo.write(i);
+        delay(15);
+        }
+        digitalWrite(relepin, HIGH);
+        
+  }
+
+  if (seguro.justReleased()) {
+    Serial.println("Button was just released!");
+          for ( int i=180; i>=0; i--){ 
+          servo.write(i);
+          delay(15);
+          }
+          digitalWrite(relepin, LOW);
+  }
+  
+  
+  delay(10);
+}//FIN LOOP
