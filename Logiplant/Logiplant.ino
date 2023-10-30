@@ -297,7 +297,7 @@ Servo mervo;                      //datos servo en 21
 Adafruit_Debounce btn   (boton, LOW);
 Adafruit_Debounce btn2  (seguro, LOW);
 
-void setup(void){
+void setup(void){>
   delay(1000);
   Serial.begin(9600);
   btn.begin();
@@ -496,14 +496,18 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 
 Servo servo;
 
-
 #define bolsapin 18
 #define seguropin 19
 
 Adafruit_Debounce bolsa(bolsapin, LOW);
 Adafruit_Debounce seguro(seguropin, LOW);
-
 byte relepin=33;  //GPIO33
+byte numbol=0;
+
+int             impresion=27;     //Indicador de impresion
+int             hall= 26;         //GPIO26 sensor hall
+unsigned long   antes=0;
+const long      interval=5000;    //Tiempo en milesimas
 
 void setup() {
   Serial.begin(9600);
@@ -511,33 +515,77 @@ void setup() {
   bolsa.begin();
   seguro.begin();
   pinMode(relepin,  OUTPUT);
+  pinMode(hall,     INPUT);
+  pinMode(impresion,OUTPUT);
   digitalWrite(relepin, LOW);
 }
 
 void loop() {
+  unsigned long ahora = millis();
   bolsa.update();
   seguro.update();
-  
+  byte boton=0;
+
+//****HALL   
+    uint16_t value = analogRead (hall);
+    uint16_t range = get_gp2d12 (value);
+    Serial.println (value);
+    //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
+    //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
+    if (value>=2500) {
+        Serial.println("Tanque lleno ");
+//        ucg.setFont(ucg_font_ncenR10_hr);
+//        ucg.setColor(255, 0, 55);
+//        ucg.setPrintPos(2,18); 
+//        ucg.print("TANQUE LLENO "); 
+        delay(200);     
+//        ucg.setColor(0, 0, 0);
+//        ucg.drawBox(1, 7, 128, 13);
+    }        
+//*****HALL  FIN
   
   if (bolsa.justPressed()) {
+    boton++;
     Serial.println("Button was just pressed!");
         for (byte i=0; i<=180;i++){
         servo.write(i);
         delay(15);
         }
-        digitalWrite(relepin, HIGH);
-        
+        //digitalWrite(relepin, HIGH);      
   }
 
   if (seguro.justReleased()) {
+    numbol++;
+    Serial.println(numbol);
     Serial.println("Button was just released!");
           for ( int i=180; i>=0; i--){ 
           servo.write(i);
           delay(15);
           }
+          delay(2000);
+          digitalWrite(relepin, HIGH);
+          Serial.println("motor on");
+          delay(5000);
           digitalWrite(relepin, LOW);
+          Serial.println("motor off");
+          delay(2000);
   }
-  
-  
+//----------------------------------------------------------------------RECIBO
+  Serial.println("Otra bolsa? presione boton 1 de lo contrario espere");
+  if (bolsa.justPressed())
+  boton++;
+  Serial.println(boton);
+  if (boton>0){
+    digitalWrite(impresion, HIGH);
+    Serial.println("Lugar "+String(ahora));
+    Serial.println("Bolsas "+String(numbol));
+    const String impres=("Lugar "+String(ahora));
+  }
+//----------------------------------------------------------------------RECIBO  
   delay(10);
 }//FIN LOOP
+
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+    if (value < 10) value = 10;
+    return ((67870.0 / (value - 3.0)) - 40.0);
+}
