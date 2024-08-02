@@ -297,7 +297,7 @@ Servo mervo;                      //datos servo en 21
 Adafruit_Debounce btn   (boton, LOW);
 Adafruit_Debounce btn2  (seguro, LOW);
 
-void setup(void){>
+void setup(void){
   delay(1000);
   Serial.begin(9600);
   btn.begin();
@@ -584,6 +584,123 @@ void loop() {
 //----------------------------------------------------------------------RECIBO  
   delay(10);
 }//FIN LOOP
+
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+    if (value < 10) value = 10;
+    return ((67870.0 / (value - 3.0)) - 40.0);
+}
+/////////////////////////02/08 da recibo pero la interrupcion puede bloquear si se deja presionado... tratar de quitar interrupcion
+#include "Adafruit_Debounce.h"
+#include <ESP32Servo.h>
+#include "Ucglib.h"
+#include <SPI.h>
+#include <Wire.h> 
+
+Servo servo;
+
+#define bolsapin 18  //junto gsm
+#define seguropin 19 //junto esp
+
+
+Adafruit_Debounce bolsa(bolsapin, LOW);
+Adafruit_Debounce seguro(seguropin, LOW);
+byte relepin=33;  //GPIO33
+byte numbot=0;
+byte numbol=1;
+
+int             impresion=27;     //Indicador de impresion
+int             hall= 26;         //GPIO26 sensor hall
+unsigned long   antes=0;
+const long      interv=5000;    //Tiempo en milesimas
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(21);
+  bolsa.begin();
+  seguro.begin();
+  pinMode(relepin,  OUTPUT);
+  pinMode(hall,     INPUT);
+  pinMode(impresion,OUTPUT);
+  digitalWrite(relepin, LOW);
+  attachInterrupt(digitalPinToInterrupt(seguropin), inter, RISING);
+}
+
+void loop() {
+  unsigned long ahora = millis();
+  bolsa.update();
+  seguro.update();
+//  byte boton=0;
+
+//****HALL   
+    uint16_t value = analogRead (hall);
+    uint16_t range = get_gp2d12 (value);
+    Serial.println (value);
+    //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
+    //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
+    if (value>=2500) {
+        Serial.println("Tanque lleno ");
+//        ucg.setFont(ucg_font_ncenR10_hr);
+//        ucg.setColor(255, 0, 55);
+//        ucg.setPrintPos(2,18); 
+//        ucg.print("TANQUE LLENO "); 
+        delay(200);     
+//        ucg.setColor(0, 0, 0);
+//        ucg.drawBox(1, 7, 128, 13);
+    }        
+//*****HALL  FIN
+
+    switch (numbot){
+    case 0:                                           //Recibir y procesar bolsas
+        Serial.println("Ingrese bolsa");
+        for (byte i=0; i<=180;i++){
+        servo.write(i);
+        delay(15);
+        }
+        delay(10000);
+        Serial.println("Peligro! cerrando puerta");
+        for (int i=0;i<=6;i++){
+          Serial.println("La puerta se cierra en: "+String(6-i));
+          delay(900);
+         }
+        for ( int i=180; i>=0; i--){ 
+          servo.write(i);
+          delay(15);
+        }
+        
+        for (int i=0;i<=5;i++){
+              Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
+            if (seguro.justPressed()){numbot=1;}
+            delay(900);
+          }
+       
+          digitalWrite(relepin, HIGH);
+          Serial.println("motor on");
+          delay(5000);
+          digitalWrite(relepin, LOW);
+          Serial.println("motor off");
+          delay(2000);
+          numbol++;//conteo de bolsas
+          Serial.println(numbot);
+          Serial.println(numbol);
+    break;
+    case 1://--------------------------------------------------------------------Recibo
+          digitalWrite(impresion, HIGH);
+          Serial.println("Lugar "+String(ahora));
+          Serial.println("Bolsas "+String(numbol));
+          const String impres=("Lugar "+String(ahora));
+          numbol=0;
+          numbot=0;
+    break;//--------------------------------------------------------------------Recibo
+         
+    }
+
+  delay(10);
+}//FIN LOOP
+
+
+void inter(){  // Funcion que se ejecuta durante cada interrupion
+     numbot=1; Serial.println(numbot);
+  }
 
 uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
