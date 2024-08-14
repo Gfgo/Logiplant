@@ -435,58 +435,8 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
-//**********************CAMBIO
 
-//byte             hall= A0;         //GPIO26 sensor hall
-//
-//const byte      boton=2;         //GPIO18 Boton de puerta
-//byte            lecbot=0;         //Lectura estado boton
-//
-//const byte       boton2=3;        //GPIO25 Boton de recibo
-//byte             lecbot2=0;        //Lectura estado boton
-//
-//byte            numbot=0;         //Numero de veces boton pulsado
-//byte            numbol=0;         //Numero de bolsas
-//
-//void setup() {
-//  pinMode(hall,   INPUT);      
-//  Serial.begin(9600);
-//  pinMode(boton,  INPUT);
-//  pinMode(boton2,  INPUT); 
-//    attachInterrupt(digitalPinToInterrupt(boton), inter, FALLING);
-//
-//}
-//
-//void loop() {
-//    uint16_t value = analogRead (hall);
-//    uint16_t range = get_gp2d12 (value);
-//    Serial.println (value);
-//  
-//    lecbot= (digitalRead(boton)); Serial.print("numbot ");Serial.println(numbot);
-//    lecbot2= (digitalRead(boton2)); Serial.print("numbol ");Serial.println(numbol);
-//    Serial.print("lecbot ");Serial.println(lecbot);
-//    Serial.print("lecbot2 ");Serial.println(lecbot2);
-//    
-//    delay(500);
-//
-//}
-//
-//uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
-//    if (value < 10) value = 10;
-//    return ((67870.0 / (value - 3.0)) - 40.0);
-//}
-//
-//  
-//void inter(){  // Funcion que se ejecuta durante cada interrupion
-// while (lecbot==false){
-//  //delay(10);
-//  numbot ++; Serial.println(numbot);
-//  numbol ++;}
-//  
-//}
-//
-////********************************************************88
-// nuevo prog 25/10
+////*****************************otro debounce
 
 #include "Adafruit_Debounce.h"
 #include <ESP32Servo.h>
@@ -589,8 +539,7 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
-/////////////////////////02/08 da recibo pero la interrupcion puede bloquear si se deja presionado... tratar de quitar interrupcion
-#include "Adafruit_Debounce.h"
+////********************************************************88// nuevo prog 25/10 funciona14/08
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -598,13 +547,12 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 
 Servo servo;
 
-#define bolsapin 18  //junto gsm
-#define seguropin 19 //junto esp
+#define seguropin  19  //junto esp seguro bolsa final carrera
+#define bolsapin 18 //junto gsm boton pin bolsa
 
 
-Adafruit_Debounce bolsa(bolsapin, LOW);
-Adafruit_Debounce seguro(seguropin, LOW);
-byte relepin=33;  //GPIO33
+
+byte relepin=33;  //GPIO33 pin rele3
 byte numbot=0;
 byte numbol=1;
 
@@ -616,20 +564,15 @@ const long      interv=5000;    //Tiempo en milesimas
 void setup() {
   Serial.begin(9600);
   servo.attach(21);
-  bolsa.begin();
-  seguro.begin();
   pinMode(relepin,  OUTPUT);
   pinMode(hall,     INPUT);
   pinMode(impresion,OUTPUT);
   digitalWrite(relepin, LOW);
-  attachInterrupt(digitalPinToInterrupt(seguropin), inter, RISING);
+
 }
 
 void loop() {
   unsigned long ahora = millis();
-  bolsa.update();
-  seguro.update();
-//  byte boton=0;
 
 //****HALL   
     uint16_t value = analogRead (hall);
@@ -666,13 +609,19 @@ void loop() {
           servo.write(i);
           delay(15);
         }
-        
+//--------------------------------------boton recibo        
         for (int i=0;i<=5;i++){
-              Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
-            if (seguro.justPressed()){numbot=1;}
-            delay(900);
+            Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
+            unsigned long startTime = millis();
+            while (millis() - startTime < 1000) {
+              if (!digitalRead(bolsapin)){
+                numbot=1; 
+                delay(50);
+                Serial.println("Generando recibo ");
+                break;}
+            }
           }
-       
+ //--------------------------------------boton recibo       
           digitalWrite(relepin, HIGH);
           Serial.println("motor on");
           delay(5000);
@@ -698,11 +647,73 @@ void loop() {
 }//FIN LOOP
 
 
-void inter(){  // Funcion que se ejecuta durante cada interrupion
-     numbot=1; Serial.println(numbot);
-  }
-
 uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
+}
+
+//----------------cronometro y boton
+const int ledPin = LED_BUILTIN; // Pin del LED de la tarjeta
+const int buttonPin = 2; // Pin del botón
+unsigned long previousMillis = 0; // Variable para almacenar el tiempo anterior
+unsigned long interval = 0; // Intervalo en milisegundos
+bool buttonPressed = false; // Estado del botón
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.println("Hola");
+  waitForMillis(5000); // Espera 5 segundos
+
+  digitalWrite(ledPin, HIGH); // Enciende el LED
+  waitForMillis(5000); // Espera 5 segundos con el LED encendido
+
+  digitalWrite(ledPin, LOW); // Apaga el LED
+  countdown(6000); // Muestra una cuenta regresiva de 6 segundos
+
+  Serial.println("¿Presionar botón para decir adiós?");
+  unsigned long buttonCountdown = countdown(3000); // Cuenta regresiva de 10 segundos para presionar el botón
+
+  if (buttonPressedDuringCountdown(buttonCountdown)) {
+    Serial.println("Adiós");
+    waitForMillis(3000); // Espera 3 segundos mostrando "Adiós"
+  }
+
+  // Reinicia el ciclo
+}
+
+// Función para esperar un tiempo en milisegundos
+void waitForMillis(unsigned long waitTime) {
+  unsigned long startTime = millis();
+  while (millis() - startTime < waitTime) {
+    // Permite que otras tareas se ejecuten
+  }
+}
+
+// Función para mostrar una cuenta regresiva en milisegundos
+unsigned long countdown(unsigned long countdownTime) {
+  unsigned long startTime = millis();
+  while (millis() - startTime < countdownTime) {
+    unsigned long remainingTime = countdownTime - (millis() - startTime);
+    Serial.print("Tiempo restante: ");
+    Serial.println(remainingTime / 1000);
+    waitForMillis(1000); // Espera 1 segundo
+  }
+  return millis() - startTime;
+}
+
+// Función para verificar si el botón fue presionado durante la cuenta regresiva
+bool buttonPressedDuringCountdown(unsigned long countdownTime) {
+  unsigned long startTime = millis();
+  while (millis() - startTime < countdownTime) {
+    if (digitalRead(buttonPin) == HIGH) {
+      return true; // Botón presionado
+      break;
+    }
+  }
+  return false; // Botón no presionado
 }
