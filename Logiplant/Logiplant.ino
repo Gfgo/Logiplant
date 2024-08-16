@@ -547,8 +547,8 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 
 Servo servo;
 
-#define seguropin  19   //junto esp seguro bolsa final carrera
-#define bolsapin 18     //junto gsm boton pin bolsa
+#define seguropin   19   //junto esp seguro bolsa final carrera
+#define bolsapin    18     //junto gsm boton pin bolsa
 
 
 
@@ -560,6 +560,9 @@ int             impresion=27;     //Indicador de impresion
 int             hall= 26;         //GPIO26 sensor hall
 unsigned long   antes=0;
 const long      interv=5000;      //Tiempo en milesimas
+bool inicio=false;
+bool seguro=false;
+bool tanque=false;
 
 void setup() {
   Serial.begin(9600);
@@ -573,7 +576,7 @@ void setup() {
 
 void loop() {
   unsigned long ahora = millis();
-  bool inicio=false;
+
 
 //****HALL   
     uint16_t value = analogRead (hall);
@@ -582,6 +585,7 @@ void loop() {
     //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
     //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
     if (value>=2500) {
+        tanque=true;
         Serial.println("Tanque lleno ");
 //        ucg.setFont(ucg_font_ncenR10_hr);
 //        ucg.setColor(255, 0, 55);
@@ -590,66 +594,81 @@ void loop() {
         delay(200);     
 //        ucg.setColor(0, 0, 0);
 //        ucg.drawBox(1, 7, 128, 13);
-    }        
+          setup();}        
 //*****HALL  FIN
-// boton para iniciar proceso, leer seguro antes de empezar motor y programar e instalar sim800
+// leer seguro de puerta antes de empezar motor y lectura de tanque lleno .... hay problemas y programar e instalar sim800
+if ((digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}
+  else{
+    Serial.println("Fallo 01, LLamar tecnico ...");
+    delay(15);
+    setup();}
 
-  Serial.println("Presiones boton para iniciar ...");
-  if (!digitalRead(bolsapin)){inicio=true;}
-    while (inicio){
-      switch (numbot){
-      case 0:                                           //Recibir y procesar bolsas
-          Serial.println("Ingrese bolsa");
-          for (byte i=0; i<=180;i++){
-          servo.write(i);
-          delay(15);
-          }
-          delay(10000);
-          Serial.println("Peligro! cerrando puerta");
-          for (int i=0;i<=6;i++){
-            Serial.println("La puerta se cierra en: "+String(6-i));
-            delay(900);
-           }
-          for ( int i=180; i>=0; i--){ 
+    Serial.println("Presiones boton para iniciar ...");
+    if (!digitalRead(bolsapin)){inicio=true;}
+      while (inicio){
+        switch (numbot){
+        case 0:                                           //Recibir y procesar bolsas
+            Serial.println("Ingrese bolsa");
+            for (byte i=0; i<=180;i++){
             servo.write(i);
             delay(15);
-          }
-  //--------------------------------------boton recibo        
-          for (int i=0;i<=5;i++){
-              Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
-              unsigned long startTime = millis();
-              while (millis() - startTime < 1000) {
-                if (!digitalRead(bolsapin)){
-                  numbot=1; 
-                  delay(50);
-                  Serial.println("Generando recibo ");
-                  break;}
-              }
             }
-   //--------------------------------------boton recibo       
-            digitalWrite(relepin, HIGH);
-            Serial.println("motor on");
-            delay(5000);
-            digitalWrite(relepin, LOW);
-            Serial.println("motor off");
-            delay(2000);
-            numbol++;//conteo de bolsas
-            Serial.println(numbot);
-            Serial.println(numbol);
-      break;
-      case 1://--------------------------------------------------------------------Recibo
-            digitalWrite(impresion, HIGH);
-            Serial.println("Lugar "+String(ahora));
-            Serial.println("Bolsas "+String(numbol));
-            const String impres=("Lugar "+String(ahora));
-            numbol=0;
-            numbot=0;
-            inicio=false;
-      break;//--------------------------------------------------------------------Recibo
-           
-      }
-    }//fin while de inicio
-  delay(10);
+            delay(10000);
+            Serial.println("Peligro! cerrando puerta");
+            for (int i=0;i<=6;i++){
+              Serial.println("La puerta se cierra en: "+String(6-i));
+              delay(900);
+             }
+            for ( int i=180; i>=0; i--){ 
+              servo.write(i);
+              delay(15);
+            }
+    //--------------------------------------boton recibo        
+            for (int i=0;i<=5;i++){
+                Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
+                unsigned long startTime = millis();
+                while (millis() - startTime < 1000) {
+                  if (!digitalRead(bolsapin)){
+                    numbot=1; 
+                    delay(50);
+                    Serial.println("Generando recibo ");
+                    break;}
+                }
+              }
+     //--------------------------------------boton recibo       
+    if (!digitalRead(seguropin)){seguro=true;}
+      else{
+        Serial.println("Seguro de motor no detectado ...");
+        delay(100);
+        setup();}
+      while (seguro){
+              digitalWrite(relepin, HIGH);
+              Serial.println("motor on");
+              delay(5000);
+              digitalWrite(relepin, LOW);
+              Serial.println("motor off");
+              delay(2000);
+              numbol++;//conteo de bolsas
+              Serial.println(numbot);
+              Serial.println(numbol);
+              break;}
+        break;
+        case 1://--------------------------------------------------------------------Recibo
+              digitalWrite(impresion, HIGH);
+              Serial.println("Lugar "+String(ahora));
+              Serial.println("Bolsas "+String(numbol));
+              const String impres=("Lugar "+String(ahora));
+              numbol=0;
+              numbot=0;
+              inicio=false;
+             if (value>=2500) {
+                  tanque=true;
+                  Serial.println("Tanque lleno ");}
+        break;//--------------------------------------------------------------------Recibo
+             
+        }
+      }//fin while de inicio
+    delay(10);
 }//FIN LOOP
 
 
