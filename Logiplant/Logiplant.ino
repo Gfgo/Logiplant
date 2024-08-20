@@ -539,7 +539,10 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
-////********************************************************88// nuevo prog 25/10 funciona14/08
+////********************************************************88// nuevo prog 25/10 funciona14/08 
+//seguros ok falta gsm pantalla 20/08 
+
+
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -547,8 +550,8 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 
 Servo servo;
 
-#define seguropin   19   //junto esp seguro bolsa final carrera
-#define bolsapin    18     //junto gsm boton pin bolsa
+#define seguropin   19      //junto esp seguro bolsa final carrera
+#define bolsapin    18      //junto gsm boton pin bolsa
 
 
 
@@ -597,11 +600,8 @@ void loop() {
           setup();}        
 //*****HALL  FIN
 // leer seguro de puerta antes de empezar motor y lectura de tanque lleno .... hay problemas y programar e instalar sim800
-if ((digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}
-  else{
-    Serial.println("Fallo 01, LLamar tecnico ...");
-    delay(15);
-    setup();}
+seguro=(digitalRead(seguropin));
+if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
 
     Serial.println("Presiones boton para iniciar ...");
     if (!digitalRead(bolsapin)){inicio=true;}
@@ -668,7 +668,11 @@ if ((digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}
              
         }
       }//fin while de inicio
-    delay(10);
+    delay(10);}
+  else{
+    Serial.println("Fallo 01, LLamar tecnico ...");
+    delay(60);
+    setup();}
 }//FIN LOOP
 
 
