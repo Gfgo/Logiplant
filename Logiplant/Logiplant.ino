@@ -397,13 +397,7 @@ void loop(void){
 //  ucg.drawBox(74, 38, 17, 12);
 //-----------------------------------------------------------------Recibo
   Serial.println("Otra bolsa presione boton 1, sino boton 2 ");
-  ucg.setColor(255, 255, 255);
-  ucg.setPrintPos(2,60); 
-  ucg.print("Bolsa? 1,");
-  ucg.setPrintPos(2,80);
-  ucg.print("Recibo? 2 ");
-  ucg.setColor(128, 128, 0);
-  ucg.drawBox(1, 45, 70, 38);
+
   lecbot2= (digitalRead(boton2));
   Serial.print(lecbot2); Serial.print(" ");
   if(digitalRead(lecbot2)==0){
@@ -542,7 +536,6 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 ////********************************************************88// nuevo prog 25/10 funciona14/08 
 //seguros ok falta gsm pantalla 20/08 
 
-
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -553,7 +546,7 @@ Servo servo;
 #define seguropin   19      //junto esp seguro bolsa final carrera
 #define bolsapin    18      //junto gsm boton pin bolsa
 
-
+Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
 
 byte relepin=33;  //GPIO33 pin rele3
 byte numbot=0;
@@ -564,8 +557,8 @@ int             hall= 26;         //GPIO26 sensor hall
 unsigned long   antes=0;
 const long      interv=5000;      //Tiempo en milesimas
 bool inicio=false;
-bool seguro=false;
-bool tanque=false;
+bool seguro=false;    //seguro de motor final de carrera
+bool tanque=false;    // estado de tanque
 
 void setup() {
   Serial.begin(9600);
@@ -574,6 +567,9 @@ void setup() {
   pinMode(hall,     INPUT);
   pinMode(impresion,OUTPUT);
   digitalWrite(relepin, LOW);
+  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
+  ucg.setFont(ucg_font_ncenR12_hr);
+  ucg.clearScreen();
 
 }
 
@@ -585,23 +581,49 @@ void loop() {
     uint16_t value = analogRead (hall);
     uint16_t range = get_gp2d12 (value);
     Serial.println (value);
-    //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
-    //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
     if (value>=2500) {
         tanque=true;
+  //unsigned long inicio = millis();
+  while (millis() - ahora < 6000) {
         Serial.println("Tanque lleno ");
-//        ucg.setFont(ucg_font_ncenR10_hr);
-//        ucg.setColor(255, 0, 55);
-//        ucg.setPrintPos(2,18); 
-//        ucg.print("TANQUE LLENO "); 
-        delay(200);     
+        ucg.setFont(ucg_font_ncenR10_hr);
+        ucg.setColor(255, 0, 55);
+        ucg.setPrintPos(0,125); 
+        ucg.print("TANQUE LLENO "); 
+        }
 //        ucg.setColor(0, 0, 0);
 //        ucg.drawBox(1, 7, 128, 13);
-          setup();}        
+          setup();} else {tanque=false;}   
+
 //*****HALL  FIN
+
+//-------------------------------------Hall  
+  ucg.setColor(255, 255, 255);
+  ucg.setPrintPos(2, 54);
+  ucg.print("Tanque ");
+
+  ucg.setColor(0, 0, 255, 128);
+  ucg.setColor(1, 0, 255, 128);
+  ucg.setColor(2, 255, 0, 60);
+  ucg.setColor(3, 255, 0, 60);
+  ucg.drawGradientBox(90, 40, 38, 30);//----------------Tanque
+  ucg.setColor(255, 255, 255);
+  ucg.drawFrame(90, 40, 38, 30);//x, y (posición) w, h (ancho, alto)
+
+//----------------------------------------------------------------------Descarga de tanque  
+//  for (byte cont=0;cont<=10;cont++)  {                   //38,30 ancho *alto nivel
+//    byte y = map(cont, 1, 10, 3, 28); //peso y nivel     //<97 bajo /98 a 180 medio/ 181> alto
+    byte y = map(value, 2500, 1600, 3, 28);
+    ucg.setColor(0, 0, 0);//negro
+    ucg.drawBox(91, 41, 36, y);
+    delay (200);
+//  }
+//----------------------------------------------------------------------
+
 // leer seguro de puerta antes de empezar motor y lectura de tanque lleno .... hay problemas y programar e instalar sim800
 seguro=(digitalRead(seguropin));
-if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
+Serial.printf("Seguro %d\t",seguro); Serial.printf(" tanque %d\n",tanque);
+if ((seguro==true)&&(tanque==false)){seguro=false;inicio=false;
 
     Serial.println("Presiones boton para iniciar ...");
     if (!digitalRead(bolsapin)){inicio=true;}
@@ -640,6 +662,7 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
       else{
         Serial.println("Seguro de motor no detectado ...");
         delay(100);
+        seguro=false;inicio=false;
         setup();}
       while (seguro){
               digitalWrite(relepin, HIGH);
