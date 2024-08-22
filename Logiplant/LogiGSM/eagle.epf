@@ -326,10 +326,6 @@ Views=" 1: 545.967 -548.44 727.677 -385.217"
 Sheet="1"
 
 [Win_2]
-Type="Control Panel"
-Number=0
-
-[Win_3]
 Type="Board Editor"
 Number=1
 File="LogiGSM.brd"
@@ -372,6 +368,10 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=1
+
+[Win_3]
+Type="Control Panel"
+Number=0
 
 [Desktop]
 Screen="1920 1080"
