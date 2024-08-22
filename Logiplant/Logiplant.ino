@@ -769,3 +769,127 @@ bool buttonPressedDuringCountdown(unsigned long countdownTime) {
   }
   return false; // Botón no presionado
 }
+
+
+//////////////////////////////********************************************** letras pantalla
+#include <ESP32Servo.h>
+#include "Ucglib.h"
+#include <SPI.h>
+#include <Wire.h> 
+
+Servo servo;
+
+#define seguropin   19      //junto esp seguro bolsa final carrera
+#define bolsapin    18      //junto gsm boton pin bolsa
+
+Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
+
+byte relepin=33;  //GPIO33 pin rele3
+byte numbot=0;
+byte numbol=1;
+
+int             impresion=27;     //Indicador de impresion
+int             hall= 26;         //GPIO26 sensor hall
+unsigned long   antes=0;
+const long      interv=5000;      //Tiempo en milesimas
+bool inicio=false;
+bool seguro=false;    //seguro de motor final de carrera
+bool tanque=false;    // estado de tanque
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(21);
+  pinMode(relepin,  OUTPUT);
+  pinMode(hall,     INPUT);
+  pinMode(impresion,OUTPUT);
+  digitalWrite(relepin, LOW);
+  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
+  ucg.setFont(ucg_font_ncenR12_hr);
+  ucg.clearScreen();
+
+}
+
+void loop() {
+  unsigned long ahora = millis();
+
+
+//****HALL   
+    uint16_t value = analogRead (hall);
+    uint16_t range = get_gp2d12 (value);
+    Serial.println (value);
+    if (value>=2500) {
+        tanque=true;
+  //unsigned long inicio = millis();
+  while (millis() - ahora < 6000) {
+        Serial.println("Tanque lleno ");
+        ucg.setFont(ucg_font_ncenR08_hr);
+        ucg.setColor(255, 0, 55);
+        ucg.setPrintPos(0,125); 
+        ucg.print("TANQUE LLENO "); 
+        }
+//        ucg.setColor(0, 0, 0);
+//        ucg.drawBox(1, 7, 128, 13);
+          setup();} else {tanque=false;}   
+
+//*****HALL  FIN
+
+//-------------------------------------Hall  
+  ucg.setColor(255, 255, 255);
+  ucg.setPrintPos(2, 23);
+  ucg.print("Tanque ");
+
+  ucg.setColor(0, 255, 0, 60);
+  ucg.setColor(1, 255, 0, 60);
+  ucg.setColor(2, 0, 255, 128);
+  ucg.setColor(3, 0, 255, 128);
+  ucg.drawGradientBox(90, 5, 38, 30);//----------------Tanque
+  ucg.setColor(255, 255, 255);
+  ucg.drawFrame(90, 5, 38, 30);//x, y (posición) w, h (ancho, alto)
+
+//----------------------------------------------------------------------Descarga de tanque  
+    byte y = map(value, 1600, 2500, 3, 28);
+    ucg.setColor(0, 0, 0);//negro
+    ucg.drawBox(91, 41, 36, (28-y));
+    delay (50);
+
+//----------------------------------------------------------------------
+
+ucg.setFontMode(UCG_FONT_MODE_TRANSPARENT);
+ucg.setFont(ucg_font_7x14_tf);
+ucg.setColor(255, 255, 255);
+ucg.setPrintPos(2,48);
+ucg.print("Presiones boton para iniciar ...");
+ucg.setPrintPos(2,58);
+ucg.print("Ingrese bolsa");
+ucg.setPrintPos(2,68);
+ucg.print("Peligro! cerrando puerta");
+
+for (int i=0;i<=6;i++){
+  ucg.setPrintPos(2,78);
+  ucg.print("La puerta se cierra en: "+String(6-i));
+  ucg.setPrintPos(2,88);
+  ucg.print("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
+  ucg.setPrintPos(2,98);
+  ucg.print("Generando recibo ");
+  delay(900);
+ }
+//ucg.setPrintPos(2,108);
+//ucg.print("Seguro de motor no detectado ...");
+//ucg.setPrintPos(2,118);
+//ucg.print("motor on");
+//
+//ucg.setPrintPos(2,64);
+//ucg.print("Lugar "+String(ahora));
+//ucg.print("Bolsas "+String(numbol));
+//
+//ucg.setPrintPos(2,64);
+//ucg.print("Fallo 01, LLamar tecnico ...");
+             
+
+}//FIN LOOP
+
+
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+    if (value < 10) value = 10;
+    return ((67870.0 / (value - 3.0)) - 40.0);
+}
