@@ -642,7 +642,7 @@ bool buttonPressedDuringCountdown(unsigned long countdownTime) {
 }
 
 
-//////////////////////////////********************************************** letras pantalla
+//////////////////////////////********************************************** letras pantalla27/08/2024
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -673,8 +673,10 @@ void setup() {
   pinMode(hall,         INPUT);
   pinMode(impresion,    OUTPUT);
   digitalWrite(relepin, LOW);
-//  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
-//  ucg.clearScreen();
+  delay(1000);
+  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
+//  ucg.setFont(ucg_font_ncenR14_hr);
+  ucg.clearScreen();
 }
 
 void loop() {
@@ -694,11 +696,10 @@ void loop() {
         ucg.setPrintPos(0,125); 
         ucg.print("TANQUE LLENO "); 
         }
-     setup();} else {tanque=false;}        
+     /*setup();*/} else {tanque=false;}        
 //*****HALL  FIN
 
 //-------------------------------------------------------------------Tanque pantalla  
-  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
   ucg.setFont(ucg_font_ncenR12_hr);
   ucg.setColor(255, 255, 255);
   ucg.setPrintPos(2, 23);
@@ -708,23 +709,32 @@ void loop() {
   ucg.setColor(1, 255, 0, 60);
   ucg.setColor(2, 0, 255, 128);
   ucg.setColor(3, 0, 255, 128);
-  ucg.drawGradientBox(90, 5, 38, 30);//-----------------------------Tanque pantalla
+  ucg.drawGradientBox(90, 5, 37, 29);//-----------------------------Tanque pantalla
   ucg.setColor(255, 255, 255);
   ucg.drawFrame(90, 5, 38, 30);//x, y (posición) w, h (ancho, alto)
 
 //----------------------------------------------------------------------Descarga de tanque  
-    byte y = map(value, 1600, 2500, 3, 28);
-    ucg.setColor(0, 0, 0);//negro
-    ucg.drawBox(91, 6, 36, (28-y));
-    delay (50);
-
+  while (millis() - ahora < 2000) {
+    byte y  = map(value, 1600, 2500, 3, 28);
+    byte y2 = 0;
+    if (y2!=y){
+        ucg.setColor(0, 0, 0);//negro
+        ucg.drawBox(91, 6, 36, (28-y));
+        y2=y;
+    }
+  }
 //----------------------------------------------------------------------  
  
 if ((!digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}
   else{
+  while (millis() - ahora < 2000) {
     Serial.println("Fallo 01, LLamar tecnico ...");
-    delay(15);
-    setup();}
+    ucg.setFont(ucg_font_ncenR10_hr);
+    ucg.setColor(255, 255, 255);
+    ucg.setPrintPos(12,12);
+    ucg.print("Fallo 01 ");
+    }
+   }
     
 seguro=(digitalRead(seguropin));
 Serial.printf("Seguro %d\t",seguro); Serial.printf(" tanque %d\n",tanque);
@@ -768,7 +778,7 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
         Serial.println("Seguro de motor no detectado ...");
         delay(100);
         seguro=false;inicio=false;
-        setup();}
+       /*setup();*/}
       while (inicio=true){
               digitalWrite(relepin, HIGH);
               Serial.println("motor on");
@@ -801,7 +811,7 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
   else{
     Serial.println("Fallo 01, LLamar tecnico ...");
     delay(60);
-    setup();}
+    /*setup();*/}
 }//FIN LOOP
 
 
