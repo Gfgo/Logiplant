@@ -682,6 +682,7 @@ void setup() {
 void loop() {
   unsigned long ahora = millis();
 //  ucg.clearScreen();
+  seguro=(!digitalRead(seguropin));
 
 //****HALL   
   uint16_t value = analogRead (hall);
@@ -696,6 +697,8 @@ void loop() {
         ucg.setPrintPos(0,125); 
         ucg.print("TANQUE LLENO "); 
         }
+        ucg.setColor(0, 0, 0);
+        ucg.drawBox(0, 125, 125, 125);
      /*setup();*/} else {tanque=false;}        
 //*****HALL  FIN
 
@@ -723,24 +726,27 @@ void loop() {
         y2=y;
     }
   }
-//----------------------------------------------------------------------  
+//----------------------------------------------------------------------Descarga de tanque  
  
-if ((!digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}
-  else{
-  while (millis() - ahora < 2000) {
-    Serial.println("Fallo 01, LLamar tecnico ...");
-    ucg.setFont(ucg_font_ncenR10_hr);
-    ucg.setColor(255, 255, 255);
-    ucg.setPrintPos(12,12);
-    ucg.print("Fallo 01 ");
-    }
-   }
+if ((!digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}else{
+  fallo();
+  ucg.setColor(0, 0, 0);
+  ucg.drawBox(0, 125, 125, 125);
+  /*seguro=true;inicio=true;*/}
+  //else{
+    //while (millis() - ahora < 4000) {
+          //seguro=true;inicio=true;
+    //}
+  //}   
     
-seguro=(digitalRead(seguropin));
 Serial.printf("Seguro %d\t",seguro); Serial.printf(" tanque %d\n",tanque);
 if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
 
-    Serial.println("Presiones boton para iniciar ...");
+    Serial.println("Presione boton para iniciar ...");
+    ucg.setFont(ucg_font_fur11_hf);
+    ucg.setColor(255, 255, 255);
+    ucg.setPrintPos(0,120);
+    ucg.print("Presione para iniciar ");
     if (!digitalRead(bolsapin)){inicio=true;}
       while (inicio){
         switch (numbot){
@@ -801,7 +807,9 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
               inicio=false;
              if (value>=2500) {
                   tanque=true;
-                  Serial.println("Tanque lleno ");}
+                  Serial.println("Tanque lleno ");
+                  ucg.setColor(0, 0, 0);
+                  ucg.drawBox(0, 125, 125, 125);}
         break;//--------------------------------------------------------------------Recibo
              
         }
@@ -809,8 +817,7 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
     delay(10);
     delay(10);}
   else{
-    Serial.println("Fallo 01, LLamar tecnico ...");
-    delay(60);
+    fallo();
     /*setup();*/}
 }//FIN LOOP
 
@@ -818,6 +825,14 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
 uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
+}
+
+void fallo(void){
+    Serial.println("Fallo 01, LLamar tecnico ...");
+    ucg.setFont(ucg_font_ncenR14_hr);
+    ucg.setColor(255, 0, 55);
+    ucg.setPrintPos(20,125);
+    ucg.print("FALLO 01 ");
 }
 //**********************************************pantalla
 #include <ESP32Servo.h>
