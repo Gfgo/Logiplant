@@ -642,15 +642,15 @@ bool buttonPressedDuringCountdown(unsigned long countdownTime) {
 }
 
 
-//////////////////////////////********************************************** letras pantalla27/08/2024
+//////////////////////////////********************************************** letras pantalla29/08/2024
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
 #include <Wire.h> 
 
 Servo servo;
-#define seguropin   19      //junto esp seguro bolsa final carrera
-#define bolsapin    18      //junto gsm boton pin bolsa
+#define finalcarpin   19      //junto esp finalcar bolsa final carrera
+#define bolsapin    18      //junto gsm boton inicio/otra bolsa pin
 
 Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
 
@@ -658,13 +658,14 @@ byte relepin=33;  //GPIO33 pin rele3
 byte numbot=0;
 byte numbol=1;
 
-int             impresion=27;     //Indicador de impresion
-int             hall= 26;         //GPIO26 sensor hall
+int             impresion=27;       //Indicador de impresion
+int             hall= 26;           //GPIO26 sensor hall
 unsigned long   antes=0;
-const long      interv=5000;      //Tiempo en milesimas
+const long      interv=5000;        //Tiempo en milesimas
 bool inicio=false;
-bool seguro=false;                //seguro de motor final de carrera
-bool tanque=false;                // estado de tanque
+bool finalcar=false;                //estado de motor final de carrera
+bool ntank=false;                   // estado de nivel del tanque
+bool otrabolsa=false;               // estado de boton bolsa
 
 void setup() {
   Serial.begin(9600);
@@ -675,34 +676,45 @@ void setup() {
   digitalWrite(relepin, LOW);
   delay(1000);
   ucg.begin(UCG_FONT_MODE_TRANSPARENT);
-//  ucg.setFont(ucg_font_ncenR14_hr);
   ucg.clearScreen();
 }
 
 void loop() {
   unsigned long ahora = millis();
 //  ucg.clearScreen();
-  seguro=(!digitalRead(seguropin));
+  finalcar=(!digitalRead(finalcarpin));//estado final de carrera
+  otrabolsa=(!digitalRead(bolsapin));//estado bolsapin
+
+//************************verificacion valores
+ucg.setFont(ucg_font_fur11_hf);
+ucg.setColor(255, 255, 255);
+ucg.setPrintPos(85,60);
+ucg.print("fncr ");ucg.print(finalcar);//finalcar
+ucg.setPrintPos(85,80);
+ucg.print("bol ");ucg.print(otrabolsa);//
+ucg.setPrintPos(85,100);
+ucg.print("tank ");ucg.print(ntank);//ntank
+//************************verificacion valores  
 
 //****HALL   
   uint16_t value = analogRead (hall);
   uint16_t range = get_gp2d12 (value);
   Serial.println (value);
   if (value>=2500) {
-      tanque=true;
-  while (millis() - ahora < 6000) {
+      ntank=true;
+  while (millis() - ahora < 3000) {
         Serial.println("Tanque lleno ");
         ucg.setFont(ucg_font_ncenR10_hr);
         ucg.setColor(255, 0, 55);
         ucg.setPrintPos(0,125); 
-        ucg.print("TANQUE LLENO "); 
+        ucg.print("TANQUE LLENO ");
         }
-        ucg.setColor(0, 0, 0);
-        ucg.drawBox(0, 125, 125, 125);
-     /*setup();*/} else {tanque=false;}        
+        ucg.setColor(125, 125, 125);
+        ucg.drawBox(0, 105, 132, 23);
+     /*setup();*/} else {ntank=false;}        
 //*****HALL  FIN
 
-//-------------------------------------------------------------------Tanque pantalla  
+//-------------------------------------------------------------------Nivel pantalla  
   ucg.setFont(ucg_font_ncenR12_hr);
   ucg.setColor(255, 255, 255);
   ucg.setPrintPos(2, 23);
@@ -712,11 +724,11 @@ void loop() {
   ucg.setColor(1, 255, 0, 60);
   ucg.setColor(2, 0, 255, 128);
   ucg.setColor(3, 0, 255, 128);
-  ucg.drawGradientBox(90, 5, 37, 29);//-----------------------------Tanque pantalla
+  ucg.drawGradientBox(90, 5, 37, 29);//-----------------------------Nivel pantalla
   ucg.setColor(255, 255, 255);
   ucg.drawFrame(90, 5, 38, 30);//x, y (posición) w, h (ancho, alto)
 
-//----------------------------------------------------------------------Descarga de tanque  
+//----------------------------------------------------------------------Descarga de ntank  
   while (millis() - ahora < 2000) {
     byte y  = map(value, 1600, 2500, 3, 28);
     byte y2 = 0;
@@ -726,28 +738,26 @@ void loop() {
         y2=y;
     }
   }
-//----------------------------------------------------------------------Descarga de tanque  
+//----------------------------------------------------------------------Descarga de ntank  
  
-if ((!digitalRead(seguropin))||(tanque=true)){seguro=false;inicio=false;}else{
+if ((finalcar)||(ntank)){ 
   fallo();
-  ucg.setColor(0, 0, 0);
-  ucg.drawBox(0, 125, 125, 125);
-  /*seguro=true;inicio=true;*/}
+  /*finalcar=true;inicio=true;*/}
   //else{
     //while (millis() - ahora < 4000) {
-          //seguro=true;inicio=true;
+          //finalcar=true;inicio=true;
     //}
   //}   
     
-Serial.printf("Seguro %d\t",seguro); Serial.printf(" tanque %d\n",tanque);
-if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
+Serial.printf("finalcar %d\t",finalcar); Serial.printf(" ntank %d\n",ntank);
+if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
 
     Serial.println("Presione boton para iniciar ...");
     ucg.setFont(ucg_font_fur11_hf);
     ucg.setColor(255, 255, 255);
     ucg.setPrintPos(0,120);
     ucg.print("Presione para iniciar ");
-    if (!digitalRead(bolsapin)){inicio=true;}
+    if (otrabolsa){inicio=true;}
       while (inicio){
         switch (numbot){
         case 0:                                           //Recibir y procesar bolsas
@@ -779,11 +789,11 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
                 }
               }
      //--------------------------------------boton recibo       
-    if (!digitalRead(seguropin)){seguro=true;}
+    if (!digitalRead(finalcarpin)){finalcar=true;}
       else{
         Serial.println("Seguro de motor no detectado ...");
         delay(100);
-        seguro=false;inicio=false;
+        finalcar=false;inicio=false;
        /*setup();*/}
       while (inicio=true){
               digitalWrite(relepin, HIGH);
@@ -806,8 +816,8 @@ if ((seguro==true)&&(tanque==true)){seguro=false;inicio=false;
               numbot=0;
               inicio=false;
              if (value>=2500) {
-                  tanque=true;
-                  Serial.println("Tanque lleno ");
+                  ntank=true;
+                  Serial.println("ntank lleno ");
                   ucg.setColor(0, 0, 0);
                   ucg.drawBox(0, 125, 125, 125);}
         break;//--------------------------------------------------------------------Recibo
@@ -828,11 +838,16 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
 }
 
 void fallo(void){
+  unsigned long ahora = millis();
+  while (millis() - ahora < 3000){
     Serial.println("Fallo 01, LLamar tecnico ...");
     ucg.setFont(ucg_font_ncenR14_hr);
     ucg.setColor(255, 0, 55);
     ucg.setPrintPos(20,125);
     ucg.print("FALLO 01 ");
+  }
+    ucg.setColor(125, 125, 125);
+    ucg.drawBox(0, 105, 132, 23);
 }
 //**********************************************pantalla
 #include <ESP32Servo.h>
