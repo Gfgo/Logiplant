@@ -642,7 +642,7 @@ bool buttonPressedDuringCountdown(unsigned long countdownTime) {
 }
 
 
-//////////////////////////////********************************************** letras pantalla29/08/2024
+//////////////////////////////********************************************** letras pantalla02/09/2024
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -752,52 +752,52 @@ ucg.print("tank ");ucg.print(ntank);//ntank
     
 Serial.printf("finalcar %d\t",finalcar); Serial.printf(" ntank %d\n",ntank);
 if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
-
     Serial.println("Presione boton para iniciar ...");
     ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
     ucg.setColor(255, 255, 255);
-    ucg.setPrintPos(2,30);
-    delay(20);
+    ucg.setPrintPos(2,52);
     ucg.print("Boton para iniciar ");
+    delay(20);
     ucg.setColor(125, 125, 125);
-    ucg.drawBox(2, 30, 125, 23);//************texto pantalla
+    ucg.drawBox(2, 38, 125, 20);//************texto pantalla
     
     if (otrabolsa){inicio=true;}
       while (inicio){
         switch (numbot){
         case 0:                                           //Recibir y procesar bolsas
-            Serial.println("Ingrese bolsa");
-            ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
-            ucg.setColor(255, 255, 255);
-            ucg.setPrintPos(2,42);
-            delay(20);
-            ucg.print("Ingrese bolsa ");
-            ucg.setColor(125, 125, 125);
-            ucg.drawBox(2, 30, 125, 23);//************texto pantalla
-            
-            for (byte i=0; i<=180;i++){
+          for (byte i=0; i<=180;i++){
             servo.write(i);
             delay(15);
             }
-            delay(10000);
+        while (millis() - ahora < 10000) {
+            Serial.println("Ingrese bolsa");
+            ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+            ucg.setColor(255, 255, 255);
+            ucg.setPrintPos(2,52);
+            ucg.print("Ingrese bolsa ");
+          }//delay(50);
+            ucg.setColor(125, 125, 125);
+            ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+          
+          //delay(10000);
             Serial.println("Peligro! cerrando puerta");
             ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
             ucg.setColor(255, 255, 255);
-            ucg.setPrintPos(2,42);
-            delay(20);
+            ucg.setPrintPos(2,52);
             ucg.print("Cerrando puerta ");
+            delay(50);            
             ucg.setColor(125, 125, 125);
-            ucg.drawBox(2, 30, 125, 23);//************texto pantalla
+            ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
             
             for (int i=0;i<=6;i++){
               Serial.println("La puerta se cierra en: "+String(6-i));
               ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
               ucg.setColor(255, 255, 255);
-              ucg.setPrintPos(2,42);
-              delay(20);
-              ucg.print("Cerrando puerta ");
+              ucg.setPrintPos(2,55);
+              ucg.print("Cerrando puerta "+String(6-i));
+              delay(50);
               ucg.setColor(125, 125, 125);
-              ucg.drawBox(2, 30, 125, 23);//************texto pantalla
+              ucg.drawBox(2, 38, 125, 30);//************texto pantalla
               
               delay(900);
              }
@@ -810,11 +810,20 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
                 Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
                 ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
                 ucg.setColor(255, 255, 255);
-                ucg.setPrintPos(2,42);
-                delay(20);
-                ucg.print("Recibo? ");
+                ucg.setPrintPos(2,52);
+                ucg.print("Recibo? boton ");
+                delay(50);
                 ucg.setColor(125, 125, 125);
-                ucg.drawBox(2, 30, 125, 23);//************texto pantalla
+                ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+                ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+                ucg.setColor(255, 255, 255);
+                ucg.setPrintPos(2,62);
+                ucg.print("Otra bolsa?");
+                ucg.setPrintPos(2,78);
+                ucg.print(" espere "+String(5-i));
+                delay(50);
+                ucg.setColor(125, 125, 125);
+                ucg.drawBox(2, 48, 130, 20); ucg.drawBox(2, 58, 130, 25);//************borrar texto pantalla
             
                 unsigned long startTime = millis();
                 while (millis() - startTime < 1000) {
@@ -822,11 +831,18 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
                     numbot=1; 
                     delay(50);
                     Serial.println("Generando recibo ");
+                    ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+                    ucg.setColor(255, 255, 255);
+                    ucg.setPrintPos(2,52);
+                    ucg.print("Generando recibo ");
+                    delay(50);
+                    ucg.setColor(125, 125, 125);
+                    ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
                     break;}
                 }
               }
      //--------------------------------------boton recibo       
-    if (!digitalRead(finalcarpin)){finalcar=true;}
+    if (digitalRead(finalcarpin)){finalcar=true;}//if (!digitalRead(finalcarpin)){finalcar=true;}
       else{
         Serial.println("Seguro de motor no detectado ...");
         ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
@@ -854,13 +870,14 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
               Serial.println("Bolsas "+String(numbol));
               ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
               ucg.setColor(255, 255, 255);
-              ucg.setPrintPos(2,30);
+              ucg.setPrintPos(2,65);
               delay(20);
               ucg.print("Lugar "+String(ahora));
-              ucg.setPrintPos(7,30);
+              ucg.setPrintPos(2,82);
               ucg.print("Bolsas "+String(numbol));;
               ucg.setColor(125, 125, 125);
-              ucg.drawBox(2, 30, 125, 23);//************texto pantalla
+              ucg.drawBox(2, 38, 125, 50);//************texto pantalla
+              delay(70);
               const String impres=("Lugar "+String(ahora));
               numbol=0;
               numbot=0;
@@ -872,7 +889,7 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
                   ucg.drawBox(0, 125, 125, 125);}
         break;//--------------------------------------------------------------------Recibo
              
-        }
+        }//switchnumbot
       }//fin while de inicio
     delay(10);
     delay(10);}
