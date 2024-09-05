@@ -642,7 +642,7 @@ bool buttonPressedDuringCountdown(unsigned long countdownTime) {
 }
 
 
-//////////////////////////////********************************************** letras pantalla02/09/2024
+//////////////////////////////********************************************** gsm y pantalla falta pruebas 03/09/2024
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
