@@ -35,9 +35,6 @@ const char apn[] = "internet.comcel.com.co";
 const char gprsUser[] = "comcel";
 const char gprsPass[] = "comcel";
 
-//const char apn[] = "internet.movistar.com.co";
-//const char gprsUser[] = "movistar";
-//const char gprsPass[] = "movistar";
 
 //DATOS MQTT UBIDOTS
 #define TOKEN "BBFF-sDzTuSgHbyHsLZNx1U6RfrzCTT7gB4" //
@@ -243,24 +240,7 @@ void iniciarSIM()
     /*SerialMon*/Serial.println(F("GPRS connected"));
   }
 }
-
-///////////////libreria sleep
-//void print_wakeup_reason(){
-//  esp_sleep_wakeup_cause_t wakeup_reason;
-//  wakeup_reason = esp_sleep_get_wakeup_cause();
-//
-//  switch(wakeup_reason)
-//  {
-//    case ESP_SLEEP_WAKEUP_EXT0 : SerialMon.println("Wakeup caused by external signal using RTC_IO"); break;
-//    case ESP_SLEEP_WAKEUP_EXT1 : SerialMon.println("Wakeup caused by external signal using RTC_CNTL"); break;
-//    case ESP_SLEEP_WAKEUP_TIMER : SerialMon.println("Wakeup caused by timer"); break;
-//    case ESP_SLEEP_WAKEUP_TOUCHPAD : SerialMon.println("Wakeup caused by touchpad"); break;
-//    case ESP_SLEEP_WAKEUP_ULP : SerialMon.println("Wakeup caused by ULP program"); break;
-//    default : SerialMon.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
-//  }
-//}
-
-/****************************************
+//****************************************
  * Auxiliar Functions para Ubidots
  ****************************************/
 void callback(char* topic, byte* payload, unsigned int length) {} 
@@ -300,130 +280,640 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     if (value < 10) value = 10;
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
-//*********
-// Libraries for SD card
-#include "FS.h"
-#include "SD.h"
+
+//**********************************************
+//*******01/03/2024 nuevo Logi con GSM ok 04/03/2024
+#include <EEPROM.h>
+#include <PubSubClient.h>
+#include <stdio.h>
+#include <Arduino.h>
+
+// Select your modem:
+#define TINY_GSM_MODEM_SIM800
+// #define TINY_GSM_MODEM_SIM808
+#define RXD2 16
+#define TXD2 17
+
+// Set serial for debug console (to the Serial Monitor, default speed 115200)
+//#define /*SerialMon*/Serial Serial
+#define SerialAT Serial2
+
+// Define the serial console for debug prints, if needed
+//#define TINY_GSM_DEBUG SerialMon
+
+// Uncomment this if you want to use SSL
+//#define USE_SSL
+
+// Define how you're planning to connect to the internet
+#define TINY_GSM_USE_GPRS true
+#define TINY_GSM_USE_WIFI false
+
+// set GSM PIN, if any
+#define GSM_PIN ""
+
+//#define uS_TO_S_FACTOR 1000000    //Conversion de micro a saegundos
+//#define TIME_TO_SLEEP  120        // Tiempo inactivo del ESP
+//RTC_DATA_ATTR int bootCount = 0;
+
+const char apn[] = "internet.comcel.com.co";
+const char gprsUser[] = "comcel";
+const char gprsPass[] = "comcel";
+
+
+//DATOS MQTT UBIDOTS
+#define TOKEN "BBFF-sDzTuSgHbyHsLZNx1U6RfrzCTT7gB4" //
+#define MQTT_CLIENT_NAME "0001" // MQTT client Name, put a Random ASCII
+char mqttBroker[] = "industrial.api.ubidots.com";
+char payload[300];
+char topic[40];
+
+#include <TinyGsmClient.h>
+
+#include "Adafruit_Debounce.h"
+#include <ESP32Servo.h>
+#include "Ucglib.h"
 #include <SPI.h>
+#include <Wire.h> 
 
-#define SCK   14//18
-#define MISO  2//19
-#define MOSI  15//23
-#define CS    13//5
+Servo servo;
 
-SPIClass spi = SPIClass(VSPI);
+#define bolsapin 18
+#define seguropin 19
 
-// Timer variables
-unsigned long lastTime = 0;
-unsigned long timerDelay = 3000;
+Adafruit_Debounce bolsa(bolsapin, LOW);
+Adafruit_Debounce seguro(seguropin, LOW);
+byte relepin=33;  //GPIO33
+byte numbol=0;
 
-// Variables to hold sensor readings
-String dataMessage;
+int             impresion=27;     //Indicador de impresion
+int             hall= 26;         //GPIO26 sensor hall
+unsigned long   antes=0;
+const long      interval=5000;    //Tiempo en milesimas
 
-// Variable to save current epoch time
-unsigned long epochTime; 
+TinyGsm modem(SerialAT);
+TinyGsmClient gsmclient(modem);
+  const int  port = 80;
 
-// Initialize SD card
-void initSDCard(){
-   if (!SD.begin(CS,spi,80000000)) {
-    Serial.println("Card Mount Failed");
-    return;
-  }
-  uint8_t cardType = SD.cardType();
-
-  if(cardType == CARD_NONE){
-    Serial.println("No SD card attached");
-    return;
-  }
-  Serial.print("SD Card Type: ");
-  if(cardType == CARD_MMC){
-    Serial.println("MMC");
-  } else if(cardType == CARD_SD){
-    Serial.println("SDSC");
-  } else if(cardType == CARD_SDHC){
-    Serial.println("SDHC");
-  } else {
-    Serial.println("UNKNOWN");
-  }
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
-}
-
-// Write to the SD card
-void writeFile(fs::FS &fs, const char * path, const char * message) {
-  Serial.printf("Writing file: %s\n", path);
-
-  File file = fs.open(path, FILE_WRITE);
-  if(!file) {
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-  if(file.print(message)) {
-    Serial.println("File written");
-  } else {
-    Serial.println("Write failed");
-  }
-  file.close();
-}
-
-// Append data to the SD card
-void appendFile(fs::FS &fs, const char * path, const char * message) {
-  Serial.printf("Appending to file: %s\n", path);
-
-  File file = fs.open(path, FILE_APPEND);
-  if(!file) {
-    Serial.println("Failed to open file for appending");
-    return;
-  }
-  if(file.print(message)) {
-    Serial.println("Message appended");
-  } else {
-    Serial.println("Append failed");
-  }
-  file.close();
-}
+PubSubClient client(gsmclient);
 
 void setup() {
-  Serial.begin(115200);
-  spi.begin(SCK, MISO, MOSI, CS);
-  initSDCard();
-  
-  // If the data.txt file doesn't exist
-  // Create a file on the SD card and write the data labels
-  File file = SD.open("/data.txt");
-  if(!file) {
-    Serial.println("File doesn't exist");
-    Serial.println("Creating file...");
-    writeFile(SD, "/data.txt", "Epoch Time, Temperature, Voltage, Hummidity \r\n");
-  }
-  else {
-    Serial.println("File already exists");  
-  }
-  file.close();
-  
-}
+  /*SerialMon*/Serial.begin(115200);      //Comunicación con serial
+  delay(10);
+//  pinMode(pinSIM,OUTPUT);
+//  digitalWrite(pinSIM,HIGH);
+  /*SerialMon*/Serial.println("Setup Sensores");
+  while(!/*SerialMon*/Serial);   
+  //Begin serial communication with Arduino and GPS & SIM800 
+  SerialAT.begin(115200, SERIAL_8N1, RXD2, TXD2);
+  delay(1000);
+//  iniciarSIM();//iniciar modulo sim800L
+  delay(1000);
+  client.setServer(mqttBroker, 1883);
+//  client.setCallback(callback);
 
+  servo.attach(21);
+  bolsa.begin();
+  seguro.begin();
+  pinMode(relepin,  OUTPUT);
+  pinMode(hall,     INPUT);
+  pinMode(impresion,OUTPUT);
+  digitalWrite(relepin, LOW);
+}
+ 
 void loop() {
-  if ((millis() - lastTime) > timerDelay) {
-    //Get epoch time
-    epochTime++;
-    
-    //Get sensor readings
+
+  unsigned long ahora = millis();
+  bolsa.update();
+  seguro.update();
+  byte boton=0;
+
+//****HALL   
+    uint16_t value = analogRead (hall);
+    uint16_t range = get_gp2d12 (value);
+     /*SerialMon*/Serial.println (value);
+    //Serial.printf("Value %d\n",value); //Serial.print (value); Serial.println("\t");
+    //Serial.printf("Rango mm %d\n",range);//Serial.print (range);Serial.println (" mm");
+    if (value>=2500) {
+         /*SerialMon*/Serial.println("Tanque lleno ");
+//        ucg.setFont(ucg_font_ncenR10_hr);
+//        ucg.setColor(255, 0, 55);
+//        ucg.setPrintPos(2,18); 
+//        ucg.print("TANQUE LLENO "); 
+        delay(200);     
+//        ucg.setColor(0, 0, 0);
+//        ucg.drawBox(1, 7, 128, 13);
+    }        
+//*****HALL  FIN
+  
+  if (bolsa.justPressed()) {
+    boton++;
+     /*SerialMon*/Serial.println("Button was just pressed!");
+        for (byte i=0; i<=180;i++){
+        servo.write(i);
+        delay(15);
+        }
+        //digitalWrite(relepin, HIGH);      
+  }
+
+  if (seguro.justReleased()) {
+    numbol++;
+    /*SerialMon*/Serial.println(numbol);
+     /*SerialMon*/Serial.println("Button was just released!");
+          for ( int i=180; i>=0; i--){ 
+          servo.write(i);
+          delay(15);
+          }
+          delay(2000);
+          digitalWrite(relepin, HIGH);
+           /*SerialMon*/Serial.println("motor on");
+          delay(5000);
+          digitalWrite(relepin, LOW);
+           /*SerialMon*/Serial.println("motor off");
+          delay(2000);
+  }
+//----------------------------------------------------------------------RECIBO
+   /*SerialMon*/Serial.println("Otra bolsa? presione boton 1 de lo contrario espere");
+  if (bolsa.justPressed())
+  boton++;
+   /*SerialMon*/Serial.println(boton);
+  if (boton>0){
+    digitalWrite(impresion, HIGH);
+     /*SerialMon*/Serial.println("Lugar "+String(ahora));
+     /*SerialMon*/Serial.println("Bolsas "+String(numbol));
+    const String impres=("Lugar "+String(ahora));
+  }
+//----------------------------------------------------------------------RECIBO  
+  delay(10);
+  
+//-------------------------------------  
+//  ++bootCount;
+//  SerialMon.println("Boot number: " + String(bootCount));  //Increment boot number and print it every reboot
+//  print_wakeup_reason();//Print the wakeup reason for ESP32
+//  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);  
+//  SerialMon.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) + " Seconds");
+//
+//    delay(2000);
+//    
+////    digitalWrite(pinSIM,LOW);
+//si duerme poner codigo aqui
+////    digitalWrite(pinSensor,LOW);
+//  
+//  SerialMon.println("Going to sleep now");
+//  delay(1000);
+//  SerialMon.flush(); 
+////  esp_deep_sleep_start();
+//  SerialMon.println("This will never be printed");
+//------------------------------------- 
+
   float temperature = random(20, 50);
   /*SerialMon*/Serial.println(temperature);
   float volt= 3.3*(random(20, 50));
   /*SerialMon*/Serial.println(volt);
   byte hum= 20*(random(1, 5));
   /*SerialMon*/Serial.println(hum);
+  
+  //cabecera
+  sprintf(topic, "%s", "");                                             // Cleans the topic content
+  sprintf(topic, "%s%s", "/v1.6/devices/", "asador");                   //label
+  //inicio
+  sprintf(payload, "%s", "");                                           // Cleans the payload content
+  sprintf(payload, "{\"%s\":", "sensor");                               // A la variable de ubi 1   
+  sprintf(payload, "%s {\"value\": %s", payload, String(temperature));  // La variable que envio
+  sprintf(payload, "%s },\"%s\":", payload, "termocupla");             // A la variable de ubi 2
+  sprintf(payload, "%s {\"value\": %s", payload, String(volt));         // La variable que envio 2
+  sprintf(payload, "%s },\"%s\":", payload, "puntomedio");              // A la variable de ubi 3
+  sprintf(payload, "%s {\"value\": %s", payload, String(hum));          // La variable que envio
+  //cierre
+  sprintf(payload, "%s } }", payload); // Closes the dictionary brackets
+  client.publish(topic, payload);
+  client.loop();
+  delay(3000); 
+}//FIN LOOP
 
-    //Concatenate all info separated by commas
-    dataMessage = String(epochTime) + ";" + String(temperature) + ";" + String(volt) + ";" + String(hum)+ "\r\n";
-    Serial.print("Saving data: ");
-    Serial.println(dataMessage);
 
-    //Append the data to file
-    appendFile(SD, "/data.txt", dataMessage.c_str());
 
-    lastTime = millis();
-  }
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+    if (value < 10) value = 10;
+    return ((67870.0 / (value - 3.0)) - 40.0);
 }
+
+//******************* logi Full con patnalla franja gris sin Gsm 29/10/2024
+#include <ESP32Servo.h>
+#include "Ucglib.h"
+#include <SPI.h>
+#include <Wire.h>
+
+#include <EEPROM.h>           //sim800
+#include <PubSubClient.h>
+#include <stdio.h>
+#include <Arduino.h>
+
+Servo servo;
+#define finalcarpin   19      //junto esp finalcar bolsa final carrera
+#define bolsapin    18      //junto gsm boton inicio/otra bolsa pin
+
+#define TINY_GSM_MODEM_SIM800     //sim800
+#define RXD2 0                   // Puertos de comunicacion con ESP32 16
+#define TXD2 1                   // Puertos de comunicacion con ESP32 17
+
+#define TINY_GSM_USE_GPRS true    //sim800
+#define TINY_GSM_USE_WIFI false   //sim800
+
+#define SerialAT Serial2
+
+Ucglib_SSD1351_18x128x128_FT_SWSPI ucg(/*sclk=*/ 4, /*data=*/ 17, /*cd=*/ 16, /*cs=*/ 0, /*reset=*/ 2);
+
+
+const char apn[] = "internet.comcel.com.co";            //Red a la cual conectar
+const char gprsUser[] = "comcel";                       //sim800
+const char gprsPass[] = "comcel";                       //sim800
+
+//DATOS MQTT UBIDOTS
+#define TOKEN "BBFF-sDzTuSgHbyHsLZNx1U6RfrzCTT7gB4"   //Ubidots token.
+#define MQTT_CLIENT_NAME "0001"                       //Nombre MQTT Random ASCII
+char mqttBroker[] = "industrial.api.ubidots.com";     //ubidots
+char payload[300];                                    //ubidots
+char topic[40];                                       //ubidots
+
+byte relepin=33;  //GPIO33 pin rele3
+byte numbot=0;
+byte numbol=1;
+
+int             impresion=27;       //Indicador de impresion
+int             hall= 26;           //GPIO26 sensor hall
+unsigned long   antes=0;
+const long      interv=5000;        //Tiempo en milesimas
+bool inicio=false;
+bool finalcar=false;                //estado de motor final de carrera
+bool ntank=false;                   // estado de nivel del tanque
+bool otrabolsa=false;               // estado de boton bolsa
+uint16_t value=0;
+uint16_t range=0;
+
+#include <TinyGsmClient.h>  //sim800
+
+TinyGsm modem(SerialAT);
+TinyGsmClient gsmclient(modem);
+  const int  port = 80;
+
+PubSubClient client(gsmclient);
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(21);
+  pinMode(relepin,      OUTPUT);
+  pinMode(hall,         INPUT);
+  pinMode(impresion,    OUTPUT);
+  digitalWrite(relepin, LOW);
+  //delay(1000);
+  ucg.begin(UCG_FONT_MODE_TRANSPARENT);
+  ucg.clearScreen();
+  Serial.println("Setup Sensores");                     //sim800
+//  while(!Serial);                                       //sim800
+//  SerialAT.begin(115200, SERIAL_8N1, RXD2, TXD2);       //sim800
+//  delay(1000);                                          //sim800
+////  iniciarSIM();                                         //sim800
+//  delay(1000);                                          //sim800
+////  client.setServer(mqttBroker, 1883);                   //sim800
+////  client.setCallback(callback);                         //sim800
+}
+
+void loop() {
+  ucg.setColor(125, 125, 125);
+  ucg.drawBox(0, 105, 125, 23);
+  unsigned long ahora = millis();
+//  ucg.clearScreen();
+  finalcar=true;
+//  finalcar=(!digitalRead(finalcarpin));//estado final de carrera
+  otrabolsa=(!digitalRead(bolsapin));//estado bolsapin
+
+//************************verificacion valores
+ucg.setFont(ucg_font_fur11_hf);
+ucg.setColor(255, 255, 255);
+ucg.setPrintPos(0,103);
+ucg.print("fncr ");ucg.print(finalcar);//finalcar
+ucg.setPrintPos(45,103);
+ucg.print("bol ");ucg.print(otrabolsa);//
+ucg.setPrintPos(85,103);
+ucg.print("tank ");ucg.print(ntank);//ntank
+//************************verificacion valores  
+
+//****HALL   
+  /*uint16_t*/ value = analogRead (hall);
+  /*uint16_t*/ range = get_gp2d12 (value);
+  Serial.println (value);
+  if (value>=2500) {
+      ntank=true;
+  while (millis() - ahora < 3000) {
+        Serial.println("Tanque lleno ");
+        ucg.setFont(ucg_font_ncenR10_hr);
+        ucg.setColor(255, 0, 55);
+        ucg.setPrintPos(0,125); 
+        ucg.print("TANQUE LLENO ");
+        }
+        ucg.setColor(125, 125, 125);
+        ucg.drawBox(0, 105, 132, 23);
+     /*setup();*/} else {ntank=false;}        
+//*****HALL  FIN
+
+//-------------------------------------------------------------------Nivel pantalla  
+  ucg.setFont(ucg_font_ncenR12_hr);
+  ucg.setColor(255, 255, 255);
+  ucg.setPrintPos(2, 23);
+  ucg.print("Tanque ");
+
+  ucg.setColor(0, 255, 0, 60);
+  ucg.setColor(1, 255, 0, 60);
+  ucg.setColor(2, 0, 255, 128);
+  ucg.setColor(3, 0, 255, 128);
+  ucg.drawGradientBox(90, 5, 37, 29);//-----------------------------Nivel pantalla
+  ucg.setColor(255, 255, 255);
+  ucg.drawFrame(90, 5, 38, 30);//x, y (posición) w, h (ancho, alto)
+
+//----------------------------------------------------------------------Descarga de ntank  
+  while (millis() - ahora < 2000) {
+    descarga();
+    /*uint16_t*/ value = analogRead (hall);
+    /*uint16_t*/ range = get_gp2d12 (value);
+//    byte y  = map(value, 1600, 2500, 3, 28);
+//    byte y2 = 0;
+//    if (y2!=y){
+//        ucg.setColor(0, 0, 0);//negro
+//        ucg.drawBox(91, 6, 36, (28-y));
+//        y2=y;
+//    }
+  }
+//----------------------------------------------------------------------Descarga de ntank  
+ 
+//if ((finalcar)||(ntank)){ 
+//  fallo();
+//  /*finalcar=true;inicio=true;*/}
+//  //else{
+//    //while (millis() - ahora < 4000) {
+//          //finalcar=true;inicio=true;
+//    //}
+//  //}   
+    
+Serial.printf("finalcar %d\t",finalcar); Serial.printf(" ntank %d\n",ntank);
+if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
+    Serial.println("Presione boton para iniciar ...");
+    ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+    ucg.setColor(255, 255, 255);
+    ucg.setPrintPos(2,52);
+    ucg.print("Boton para iniciar ");
+    delay(20);
+    ucg.setColor(125, 125, 125);
+    ucg.drawBox(2, 38, 125, 20);//************texto pantalla
+    
+    if (otrabolsa){inicio=true;}
+      while (inicio){
+        switch (numbot){
+        case 0:                                           //Recibir y procesar bolsas
+          for (byte i=0; i<=180;i++){
+            servo.write(i);
+            delay(15);
+            }
+        while (millis() - ahora < 10000) {
+            Serial.println("Ingrese bolsa");
+            ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+            ucg.setColor(255, 255, 255);
+            ucg.setPrintPos(2,52);
+            ucg.print("Ingrese bolsa ");
+          }//delay(50);
+            ucg.setColor(125, 125, 125);
+            ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+          
+          //delay(10000);
+            Serial.println("Peligro! cerrando puerta");
+            ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+            ucg.setColor(255, 255, 255);
+            ucg.setPrintPos(2,52);
+            ucg.print("Cerrando puerta ");
+            delay(50);            
+            ucg.setColor(125, 125, 125);
+            ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+            
+            for (int i=0;i<=6;i++){
+              Serial.println("Ingrese bolsa, la puerta se cierra en: "+String(6-i));
+              ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+              ucg.setColor(255, 255, 255);
+              ucg.setPrintPos(2,55);
+              ucg.print("Cerrando puerta "+String(6-i));
+              delay(50);
+              ucg.setColor(125, 125, 125);
+              ucg.drawBox(2, 38, 125, 30);//************texto pantalla
+              
+              delay(900);
+             }
+            for ( int i=180; i>=0; i--){ 
+              servo.write(i);
+              delay(15);
+            }
+              while (millis() - ahora < 2000) {
+                    descarga();
+                    /*uint16_t*/ value = analogRead (hall);
+                    /*uint16_t*/ range = get_gp2d12 (value);
+                    }
+    //--------------------------------------boton recibo        
+            for (int i=0;i<=5;i++){
+                Serial.println("Recibo?, presione boton 1, Otra bolsa?espere "+String(5-i));
+                ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+                ucg.setColor(255, 255, 255);
+                ucg.setPrintPos(2,52);
+                ucg.print("Recibo? boton ");
+                delay(50);
+                ucg.setColor(125, 125, 125);
+                ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+                ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+                ucg.setColor(255, 255, 255);
+                ucg.setPrintPos(2,62);
+                ucg.print("Otra bolsa?");
+                ucg.setPrintPos(2,78);
+                ucg.print(" espere "+String(5-i));
+                delay(50);
+                ucg.setColor(125, 125, 125);
+                ucg.drawBox(2, 48, 130, 20); ucg.drawBox(2, 58, 130, 25);//************borrar texto pantalla
+            
+                unsigned long startTime = millis();
+                while (millis() - startTime < 1000) {
+                  if (!digitalRead(bolsapin)){
+                    numbot=1; 
+                    delay(50);
+                    Serial.println("Generando recibo ");
+                    ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+                    ucg.setColor(255, 255, 255);
+                    ucg.setPrintPos(2,52);
+                    ucg.print("Generando recibo ");
+                    delay(50);
+                    ucg.setColor(125, 125, 125);
+                    ucg.drawBox(2, 38, 125, 20);//************borrar texto pantalla
+                    break;}
+                }
+              }
+     //--------------------------------------boton recibo       
+    if (digitalRead(finalcarpin)){finalcar=true;}//if (!digitalRead(finalcarpin)){finalcar=true;}
+      else{
+        Serial.println("Seguro de motor no detectado ...");
+        ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+        ucg.setColor(255, 0, 55);
+        ucg.setPrintPos(15,125);
+        ucg.print("FALLO MOTOR ");//************texto pantalla
+        //delay(100);
+        finalcar=false;inicio=0;
+       /*setup();*/}
+      while (inicio=1){
+              digitalWrite(relepin, HIGH);
+              Serial.println("motor on");
+              delay(5000);
+              digitalWrite(relepin, LOW);
+              Serial.println("motor off");
+              delay(2000);
+              numbol++;//conteo de bolsas
+              Serial.println(numbot);
+              Serial.println(numbol);
+              break;}
+        break;
+        case 1://--------------------------------------------------------------------Recibo
+              digitalWrite(impresion, HIGH);
+              Serial.println("Lugar "+String(ahora));
+              Serial.println("Bolsas "+String(numbol));
+              ucg.setFont(ucg_font_fur11_hf);//************texto pantalla
+              ucg.setColor(255, 255, 255);
+              ucg.setPrintPos(2,65);
+              delay(20);
+              ucg.print("Lugar "+String(ahora));
+              ucg.setPrintPos(2,82);
+              ucg.print("Bolsas "+String(numbol));;
+              ucg.setColor(125, 125, 125);
+              ucg.drawBox(2, 38, 125, 50);//************texto pantalla
+              delay(70);
+              const String impres=("Lugar "+String(ahora));
+              numbol=0;
+              numbot=0;
+              inicio=false;
+             if (value>=2500) {
+                  ntank=true;
+                  Serial.println("ntank lleno ");
+                  ucg.setColor(0, 0, 0);
+                  ucg.drawBox(0, 125, 125, 125);}
+        break;//--------------------------------------------------------------------Recibo
+             
+        }//switchnumbot
+      }//fin while de inicio
+    delay(10);
+    delay(10);}
+  else{
+    fallo();
+    /*setup();*/}
+
+////------------------------------------- envio a ubi
+//if (!client.connected()) {reconnect();}  
+//
+//  float temperature = random(20, 50);
+//  Serial.println(temperature);
+//  float volt= 3.3*(random(20, 50));
+//  Serial.println(volt);
+//  byte hum= 20*(random(1, 5));
+//  Serial.println(hum);
+//  
+//  //cabecera
+//  sprintf(topic, "%s", "");                                             // Cleans the topic content
+//  sprintf(topic, "%s%s", "/v1.6/devices/", "asador");                   //label
+//  //inicio
+//  sprintf(payload, "%s", "");                                           // Cleans the payload content
+//  sprintf(payload, "{\"%s\":", "sensor");                               // A la variable de ubi 1   
+//  sprintf(payload, "%s {\"value\": %s", payload, String(temperature));  // La variable que envio
+//  sprintf(payload, "%s },\"%s\":", payload, "termocupla");             // A la variable de ubi 2
+//  sprintf(payload, "%s {\"value\": %s", payload, String(volt));         // La variable que envio 2
+//  sprintf(payload, "%s },\"%s\":", payload, "puntomedio");              // A la variable de ubi 3
+//  sprintf(payload, "%s {\"value\": %s", payload, String(hum));          // La variable que envio
+//  //cierre
+//  sprintf(payload, "%s } }", payload); // Closes the dictionary brackets
+//  client.publish(topic, payload);
+//  client.loop();
+//  delay(10000);
+////------------------------------------- envio a ubi  
+    
+}//FIN LOOP
+
+
+uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+    if (value < 10) value = 10;
+    return ((67870.0 / (value - 3.0)) - 40.0);
+}
+
+void descarga (void){
+ byte y  = map(value, 1600, 2500, 3, 28);
+    byte y2 = 0;
+    if (y2!=y){
+        ucg.setColor(0, 0, 0);//negro
+        ucg.drawBox(91, 6, 36, (28-y));
+        y2=y;
+    } 
+ }
+
+void fallo(void){
+  unsigned long ahora = millis();
+  while (millis() - ahora < 3000){
+    Serial.println("Fallo 01, LLamar tecnico ...");
+    ucg.setFont(ucg_font_ncenR14_hr);
+    ucg.setColor(255, 0, 55);
+    ucg.setPrintPos(20,125);
+    ucg.print("FALLO 01 ");
+  }
+    ucg.setColor(125, 125, 125);
+    ucg.drawBox(0, 105, 125, 23);
+}
+
+//void iniciarSIM()                                                   //sim800
+//{
+//  Serial.println(F("Initializing modem..."));
+//  modem.restart();
+//
+//  String modemInfo = modem.getModemInfo();
+//  Serial.print(F("Modem Info: "));
+//  Serial.println(modemInfo);
+//
+//    Serial.print(F("Connecting to "));
+//    Serial.print(apn);
+//    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//      Serial.println(F(" fail"));
+//      delay(10000);
+//      return;
+//    }
+//    Serial.println(F(" success"));
+//
+//  if (modem.isGprsConnected()) {
+//    Serial.println(F("GPRS connected"));
+//  }
+//}
+
+//void callback(char* topic, byte* payload, unsigned int length) {}     //sim800
+//
+//void reconnect() {
+//  while (!client.connected()) {
+//    Serial.println("Attempting MQTT connection...");
+//    Serial.print(F("Connecting to "));
+//    Serial.print(apn);
+//    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//      Serial.println(F(" fail"));
+//      delay(10000);
+//      return;
+//    }
+//    /*SerialMon*/Serial.println(F(" success"));
+//
+//  if (modem.isGprsConnected()) {
+//    Serial.println(F("GPRS connected"));
+//  }
+//  // Attempt to connect
+//  if (client.connect(MQTT_CLIENT_NAME, TOKEN,"")) {
+//    Serial.println("connected");
+//    } else {
+//    Serial.print("failed, rc=");
+//    Serial.print(client.state());
+//    Serial.println(" try again in 2 seconds");
+//    // Wait 2 seconds before retrying
+//    delay(2000);
+//    }
+//  }
+//}

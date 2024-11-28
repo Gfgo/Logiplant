@@ -693,13 +693,13 @@ bool finalcar=false;                //estado de motor final de carrera
 bool ntank=false;                   // estado de nivel del tanque
 bool otrabolsa=false;               // estado de boton bolsa
 
-#include <TinyGsmClient.h>  //sim800
-
-TinyGsm modem(SerialAT);
-TinyGsmClient gsmclient(modem);
-  const int  port = 80;
-
-PubSubClient client(gsmclient);
+//#include <TinyGsmClient.h>  //sim800
+//
+//TinyGsm modem(SerialAT);
+//TinyGsmClient gsmclient(modem);
+//  const int  port = 80;
+//
+//PubSubClient client(gsmclient);
 
 void setup() {
   Serial.begin(9600);
@@ -711,14 +711,14 @@ void setup() {
   //delay(1000);
   ucg.begin(UCG_FONT_MODE_TRANSPARENT);
   ucg.clearScreen();
-  Serial.println("Setup Sensores");                     //sim800
-  while(!Serial);                                       //sim800
-  SerialAT.begin(115200, SERIAL_8N1, RXD2, TXD2);       //sim800
-  delay(1000);                                          //sim800
-  iniciarSIM();                                         //sim800
-  delay(1000);                                          //sim800
-  client.setServer(mqttBroker, 1883);                   //sim800
-  client.setCallback(callback);                         //sim800
+//  Serial.println("Setup Sensores");                     //sim800
+//  while(!Serial);                                       //sim800
+//  SerialAT.begin(115200, SERIAL_8N1, RXD2, TXD2);       //sim800
+//  delay(1000);                                          //sim800
+//  iniciarSIM();                                         //sim800
+//  delay(1000);                                          //sim800
+//  client.setServer(mqttBroker, 1883);                   //sim800
+//  client.setCallback(callback);                         //sim800
 }
 
 void loop() {
@@ -773,7 +773,7 @@ ucg.print("tank ");ucg.print(ntank);//ntank
 
 //----------------------------------------------------------------------Descarga de ntank  
   while (millis() - ahora < 2000) {
-    byte y  = map(value, 1600, 2500, 3, 28);
+    byte y  = map(value, 1300, 2500, 3, 28);
     byte y2 = 0;
     if (y2!=y){
         ucg.setColor(0, 0, 0);//negro
@@ -868,7 +868,7 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
                 ucg.drawBox(2, 48, 130, 20); ucg.drawBox(2, 58, 130, 25);//************borrar texto pantalla
             
                 unsigned long startTime = millis();
-                while (millis() - startTime < 1000) {
+                while (millis() - startTime < 3000) {
                   if (!digitalRead(bolsapin)){
                     numbot=1; 
                     delay(50);
@@ -891,7 +891,9 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
         ucg.setColor(255, 0, 55);
         ucg.setPrintPos(15,125);
         ucg.print("FALLO MOTOR ");//************texto pantalla
-        delay(100);
+        delay(200);
+        ucg.setColor(125, 125, 125);
+        ucg.drawBox(0, 105, 125, 23);
         finalcar=false;inicio=false;
        /*setup();*/}
       while (inicio=true){
@@ -940,31 +942,31 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
     /*setup();*/}
 
 //------------------------------------- envio a ubi
-if (!client.connected()) {reconnect();}  
-
-  float temperature = random(20, 50);
-  Serial.println(temperature);
-  float volt= 3.3*(random(20, 50));
-  Serial.println(volt);
-  byte hum= 20*(random(1, 5));
-  Serial.println(hum);
-  
-  //cabecera
-  sprintf(topic, "%s", "");                                             // Cleans the topic content
-  sprintf(topic, "%s%s", "/v1.6/devices/", "asador");                   //label
-  //inicio
-  sprintf(payload, "%s", "");                                           // Cleans the payload content
-  sprintf(payload, "{\"%s\":", "sensor");                               // A la variable de ubi 1   
-  sprintf(payload, "%s {\"value\": %s", payload, String(temperature));  // La variable que envio
-  sprintf(payload, "%s },\"%s\":", payload, "termocupla");             // A la variable de ubi 2
-  sprintf(payload, "%s {\"value\": %s", payload, String(volt));         // La variable que envio 2
-  sprintf(payload, "%s },\"%s\":", payload, "puntomedio");              // A la variable de ubi 3
-  sprintf(payload, "%s {\"value\": %s", payload, String(hum));          // La variable que envio
-  //cierre
-  sprintf(payload, "%s } }", payload); // Closes the dictionary brackets
-  client.publish(topic, payload);
-  client.loop();
-  delay(10000);
+//if (!client.connected()) {reconnect();}  
+//
+//  float temperature = random(20, 50);
+//  Serial.println(temperature);
+//  float volt= 3.3*(random(20, 50));
+//  Serial.println(volt);
+//  byte hum= 20*(random(1, 5));
+//  Serial.println(hum);
+//  
+//  //cabecera
+//  sprintf(topic, "%s", "");                                             // Cleans the topic content
+//  sprintf(topic, "%s%s", "/v1.6/devices/", "asador");                   //label
+//  //inicio
+//  sprintf(payload, "%s", "");                                           // Cleans the payload content
+//  sprintf(payload, "{\"%s\":", "sensor");                               // A la variable de ubi 1   
+//  sprintf(payload, "%s {\"value\": %s", payload, String(temperature));  // La variable que envio
+//  sprintf(payload, "%s },\"%s\":", payload, "termocupla");             // A la variable de ubi 2
+//  sprintf(payload, "%s {\"value\": %s", payload, String(volt));         // La variable que envio 2
+//  sprintf(payload, "%s },\"%s\":", payload, "puntomedio");              // A la variable de ubi 3
+//  sprintf(payload, "%s {\"value\": %s", payload, String(hum));          // La variable que envio
+//  //cierre
+//  sprintf(payload, "%s } }", payload); // Closes the dictionary brackets
+//  client.publish(topic, payload);
+//  client.loop();
+//  delay(10000);
 //------------------------------------- envio a ubi  
     
 }//FIN LOOP
@@ -988,55 +990,55 @@ void fallo(void){
     ucg.drawBox(0, 105, 125, 23);
 }
 
-void iniciarSIM()                                                   //sim800
-{
-  Serial.println(F("Initializing modem..."));
-  modem.restart();
-
-  String modemInfo = modem.getModemInfo();
-  Serial.print(F("Modem Info: "));
-  Serial.println(modemInfo);
-
-    Serial.print(F("Connecting to "));
-    Serial.print(apn);
-    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-      Serial.println(F(" fail"));
-      delay(10000);
-      return;
-    }
-    Serial.println(F(" success"));
-
-  if (modem.isGprsConnected()) {
-    Serial.println(F("GPRS connected"));
-  }
-}
-
-void callback(char* topic, byte* payload, unsigned int length) {}     //sim800
-
-void reconnect() {
-  while (!client.connected()) {
-    Serial.println("Attempting MQTT connection...");
-    Serial.print(F("Connecting to "));
-    Serial.print(apn);
-    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-      Serial.println(F(" fail"));
-      delay(10000);
-      return;
-    }
-    /*SerialMon*/Serial.println(F(" success"));
-
-  if (modem.isGprsConnected()) {
-    Serial.println(F("GPRS connected"));
-  }
-  // Attempt to connect
-  if (client.connect(MQTT_CLIENT_NAME, TOKEN,"")) {
-    Serial.println("connected");
-    } else {
-    Serial.print("failed, rc=");
-    Serial.print(client.state());
-    Serial.println(" try again in 2 seconds");
-    // Wait 2 seconds before retrying
-    delay(2000);
-    }
-  }
-}
+//void iniciarSIM()                                                   //sim800
+//{
+//  Serial.println(F("Initializing modem..."));
+//  modem.restart();
+//
+//  String modemInfo = modem.getModemInfo();
+//  Serial.print(F("Modem Info: "));
+//  Serial.println(modemInfo);
+//
+//    Serial.print(F("Connecting to "));
+//    Serial.print(apn);
+//    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//      Serial.println(F(" fail"));
+//      delay(10000);
+//      return;
+//    }
+//    Serial.println(F(" success"));
+//
+//  if (modem.isGprsConnected()) {
+//    Serial.println(F("GPRS connected"));
+//  }
+//}
+//
+//void callback(char* topic, byte* payload, unsigned int length) {}     //sim800
+//
+//void reconnect() {
+//  while (!client.connected()) {
+//    Serial.println("Attempting MQTT connection...");
+//    Serial.print(F("Connecting to "));
+//    Serial.print(apn);
+//    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+//      Serial.println(F(" fail"));
+//      delay(10000);
+//      return;
+//    }
+//    /*SerialMon*/Serial.println(F(" success"));
+//
+//  if (modem.isGprsConnected()) {
+//    Serial.println(F("GPRS connected"));
+//  }
+//  // Attempt to connect
+//  if (client.connect(MQTT_CLIENT_NAME, TOKEN,"")) {
+//    Serial.println("connected");
+//    } else {
+//    Serial.print("failed, rc=");
+//    Serial.print(client.state());
+//    Serial.println(" try again in 2 seconds");
+//    // Wait 2 seconds before retrying
+//    delay(2000);
+//    }
+//  }
+//}

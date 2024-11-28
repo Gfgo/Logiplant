@@ -12480,7 +12480,7 @@ Source: www.vishay.com .. rwm.pdf</description>
 <part name="+3V6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+3V3" device=""/>
 <part name="P+4" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+12V" device=""/>
 <part name="P+5" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
-<part name="P+6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device=""/>
+<part name="P+6" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+5V" device="" value="+4V7"/>
 <part name="+3V7" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="+3V3" device=""/>
 <part name="GND1" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND2" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
@@ -12559,11 +12559,11 @@ Source: www.vishay.com .. rwm.pdf</description>
 <instance part="+3V2" gate="G$1" x="586.74" y="-495.3" smashed="yes" rot="R90">
 <attribute name="VALUE" x="584.2" y="-495.3" size="1.778" layer="96"/>
 </instance>
-<instance part="+3V3" gate="G$1" x="601.98" y="-447.04" smashed="yes" rot="R90">
-<attribute name="VALUE" x="601.98" y="-444.5" size="1.778" layer="96" rot="R180"/>
+<instance part="+3V3" gate="G$1" x="604.52" y="-449.58" smashed="yes" rot="R90">
+<attribute name="VALUE" x="604.52" y="-449.58" size="1.778" layer="96" rot="R180"/>
 </instance>
-<instance part="+3V4" gate="G$1" x="632.46" y="-447.04" smashed="yes" rot="R90">
-<attribute name="VALUE" x="635" y="-444.5" size="1.778" layer="96" rot="R180"/>
+<instance part="+3V4" gate="G$1" x="635" y="-449.58" smashed="yes" rot="R90">
+<attribute name="VALUE" x="635" y="-449.58" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="+3V5" gate="G$1" x="614.68" y="-474.98" smashed="yes" rot="R90">
 <attribute name="VALUE" x="619.76" y="-477.52" size="1.778" layer="96" rot="R180"/>
@@ -12685,16 +12685,6 @@ Source: www.vishay.com .. rwm.pdf</description>
 <pinref part="+3V1" gate="G$1" pin="+3V3"/>
 </segment>
 <segment>
-<pinref part="SHALL" gate="A" pin="1"/>
-<pinref part="+3V3" gate="G$1" pin="+3V3"/>
-<wire x1="609.6" y1="-447.04" x2="604.52" y2="-447.04" width="0.1524" layer="91"/>
-</segment>
-<segment>
-<pinref part="SERVO" gate="A" pin="1"/>
-<pinref part="+3V4" gate="G$1" pin="+3V3"/>
-<wire x1="640.08" y1="-447.04" x2="635" y2="-447.04" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="OLED" gate="A" pin="1"/>
 <wire x1="680.72" y1="-434.34" x2="662.94" y2="-434.34" width="0.1524" layer="91"/>
 <pinref part="+3V7" gate="G$1" pin="+3V3"/>
@@ -12712,6 +12702,16 @@ Source: www.vishay.com .. rwm.pdf</description>
 <pinref part="+3V5" gate="G$1" pin="+3V3"/>
 <pinref part="BOLSA" gate="G$1" pin="2"/>
 <wire x1="617.22" y1="-474.98" x2="622.3" y2="-474.98" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="+3V3" gate="G$1" pin="+3V3"/>
+<pinref part="SHALL" gate="A" pin="2"/>
+<wire x1="607.06" y1="-449.58" x2="609.6" y2="-449.58" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="+3V4" gate="G$1" pin="+3V3"/>
+<pinref part="SERVO" gate="A" pin="2"/>
+<wire x1="637.54" y1="-449.58" x2="640.08" y2="-449.58" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="GND" class="0">
@@ -12841,9 +12841,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="688.34" y="-441.96" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO2(ADC2_2)"/>
-<wire x1="655.32" y1="-530.86" x2="665.48" y2="-530.86" width="0.1524" layer="91"/>
-<label x="665.48" y="-530.86" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO27(ADC2_7)"/>
+<wire x1="589.28" y1="-520.7" x2="584.2" y2="-520.7" width="0.1524" layer="91"/>
+<label x="584.2" y="-520.7" size="1.016" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="SCK" class="0">
@@ -12853,9 +12853,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="688.34" y="-444.5" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO4(ADC2_0)"/>
-<wire x1="655.32" y1="-525.78" x2="665.48" y2="-525.78" width="0.1524" layer="91"/>
-<label x="665.48" y="-525.78" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO14(ADC2_6/MTMSHSPI_SCK)"/>
+<wire x1="589.28" y1="-523.24" x2="584.2" y2="-523.24" width="0.1524" layer="91"/>
+<label x="584.2" y="-523.24" size="1.016" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="MOSI-DATA" class="0">
@@ -12865,9 +12865,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="688.34" y="-447.04" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO17"/>
-<wire x1="655.32" y1="-520.7" x2="665.48" y2="-520.7" width="0.1524" layer="91"/>
-<label x="665.48" y="-520.7" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO26(ADC2_9)"/>
+<wire x1="589.28" y1="-518.16" x2="584.2" y2="-518.16" width="0.1524" layer="91"/>
+<label x="584.2" y="-518.16" size="1.016" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="CS" class="0">
@@ -12877,9 +12877,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="688.34" y="-449.58" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO0(ADC2_1)"/>
-<wire x1="655.32" y1="-528.32" x2="665.48" y2="-528.32" width="0.1524" layer="91"/>
-<label x="665.48" y="-528.32" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO12(ADC2_5/MTDI/HSPI_MISO)"/>
+<wire x1="589.28" y1="-525.78" x2="584.2" y2="-525.78" width="0.1524" layer="91"/>
+<label x="584.2" y="-525.78" size="1.016" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="CD-DC" class="0">
@@ -12889,9 +12889,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="688.34" y="-452.12" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO16"/>
-<wire x1="655.32" y1="-523.24" x2="665.48" y2="-523.24" width="0.1524" layer="91"/>
-<label x="665.48" y="-523.24" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO13(ADC2_4/MTCK/HSPI_MOSI)"/>
+<wire x1="589.28" y1="-530.86" x2="584.2" y2="-530.86" width="0.1524" layer="91"/>
+<label x="584.2" y="-530.86" size="1.016" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="IO21" class="0">
@@ -12901,9 +12901,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="665.48" y="-508" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="SERVO" gate="A" pin="2"/>
-<wire x1="640.08" y1="-449.58" x2="635" y2="-449.58" width="0.1524" layer="91"/>
-<label x="635" y="-449.58" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="SERVO" gate="A" pin="1"/>
+<wire x1="640.08" y1="-447.04" x2="635" y2="-447.04" width="0.1524" layer="91"/>
+<label x="635" y="-447.04" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="IO19" class="0">
@@ -12932,13 +12932,6 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="612.14" y="-472.44" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
-<net name="IO27" class="0">
-<segment>
-<pinref part="U$1" gate="G$1" pin="GPIO27(ADC2_7)"/>
-<wire x1="589.28" y1="-520.7" x2="584.2" y2="-520.7" width="0.1524" layer="91"/>
-<label x="584.2" y="-520.7" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-</net>
 <net name="IO25" class="0">
 <segment>
 <pinref part="U$1" gate="G$1" pin="GPIO25(ADC1_8)"/>
@@ -12953,14 +12946,14 @@ Source: www.vishay.com .. rwm.pdf</description>
 </net>
 <net name="IO26" class="0">
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO26(ADC2_9)"/>
-<wire x1="589.28" y1="-518.16" x2="584.2" y2="-518.16" width="0.1524" layer="91"/>
-<label x="584.2" y="-518.16" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="SHALL" gate="A" pin="1"/>
+<wire x1="609.6" y1="-447.04" x2="604.52" y2="-447.04" width="0.1524" layer="91"/>
+<label x="604.52" y="-447.04" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="SHALL" gate="A" pin="2"/>
-<wire x1="609.6" y1="-449.58" x2="604.52" y2="-449.58" width="0.1524" layer="91"/>
-<label x="604.52" y="-449.58" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO32(ADC1_4)"/>
+<wire x1="589.28" y1="-510.54" x2="584.2" y2="-510.54" width="0.1524" layer="91"/>
+<label x="584.2" y="-510.54" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="IO33" class="0">
@@ -12989,9 +12982,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="695.96" y="-482.6" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO01(TX)"/>
-<wire x1="655.32" y1="-502.92" x2="665.48" y2="-502.92" width="0.1524" layer="91"/>
-<label x="665.48" y="-502.92" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO17"/>
+<wire x1="655.32" y1="-520.7" x2="665.48" y2="-520.7" width="0.1524" layer="91"/>
+<label x="665.48" y="-520.7" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="TXD" class="0">
@@ -13001,9 +12994,9 @@ Source: www.vishay.com .. rwm.pdf</description>
 <label x="695.96" y="-485.14" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="U$1" gate="G$1" pin="GPIO03(RX)"/>
-<wire x1="655.32" y1="-505.46" x2="665.48" y2="-505.46" width="0.1524" layer="91"/>
-<label x="665.48" y="-505.46" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$1" gate="G$1" pin="GPIO16"/>
+<wire x1="655.32" y1="-523.24" x2="665.48" y2="-523.24" width="0.1524" layer="91"/>
+<label x="665.48" y="-523.24" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="NET" class="0">
@@ -13023,6 +13016,22 @@ Source: www.vishay.com .. rwm.pdf</description>
 </nets>
 </sheet>
 </sheets>
+<errors>
+<approved hash="106,1,589.28,-520.7,IO27,,,,,"/>
+<approved hash="106,1,701.04,-474.98,NET,,,,,"/>
+<approved hash="106,1,701.04,-480.06,RST2,,,,,"/>
+<approved hash="113,1,609.837,-448.084,SHALL,,,,,"/>
+<approved hash="113,1,664.646,-472.214,SEGURO,,,,,"/>
+<approved hash="113,1,622.734,-472.214,BOLSA,,,,,"/>
+<approved hash="113,1,640.702,-448.084,SERVO,,,,,"/>
+<approved hash="113,1,680.957,-441.734,OLED,,,,,"/>
+<approved hash="113,1,669.978,-439.42,D1,,,,,"/>
+<approved hash="113,1,636.052,-424.18,POWER12,,,,,"/>
+<approved hash="113,1,576.279,-449.58,IMPRES,,,,,"/>
+<approved hash="113,1,575.579,-477.52,RELEE,,,,,"/>
+<approved hash="113,1,701.277,-479.834,GSM,,,,,"/>
+<approved hash="113,1,690.88,-478.102,D2,,,,,"/>
+</errors>
 </schematic>
 </drawing>
 <compatibility>
