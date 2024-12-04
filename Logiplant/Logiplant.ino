@@ -575,74 +575,8 @@ uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
     return ((67870.0 / (value - 3.0)) - 40.0);
 }
 
-//----------------cronometro y boton
-const int ledPin = LED_BUILTIN; // Pin del LED de la tarjeta
-const int buttonPin = 2; // Pin del botón
-unsigned long previousMillis = 0; // Variable para almacenar el tiempo anterior
-unsigned long interval = 0; // Intervalo en milisegundos
-bool buttonPressed = false; // Estado del botón
-
-void setup() {
-  pinMode(ledPin, OUTPUT);
-  pinMode(buttonPin, INPUT_PULLUP);
-  Serial.begin(9600);
-}
-
-void loop() {
-  Serial.println("Hola");
-  waitForMillis(5000); // Espera 5 segundos
-
-  digitalWrite(ledPin, HIGH); // Enciende el LED
-  waitForMillis(5000); // Espera 5 segundos con el LED encendido
-
-  digitalWrite(ledPin, LOW); // Apaga el LED
-  countdown(6000); // Muestra una cuenta regresiva de 6 segundos
-
-  Serial.println("¿Presionar botón para decir adiós?");
-  unsigned long buttonCountdown = countdown(3000); // Cuenta regresiva de 10 segundos para presionar el botón
-
-  if (buttonPressedDuringCountdown(buttonCountdown)) {
-    Serial.println("Adiós");
-    waitForMillis(3000); // Espera 3 segundos mostrando "Adiós"
-  }
-
-  // Reinicia el ciclo
-}
-
-// Función para esperar un tiempo en milisegundos
-void waitForMillis(unsigned long waitTime) {
-  unsigned long startTime = millis();
-  while (millis() - startTime < waitTime) {
-    // Permite que otras tareas se ejecuten
-  }
-}
-
-// Función para mostrar una cuenta regresiva en milisegundos
-unsigned long countdown(unsigned long countdownTime) {
-  unsigned long startTime = millis();
-  while (millis() - startTime < countdownTime) {
-    unsigned long remainingTime = countdownTime - (millis() - startTime);
-    Serial.print("Tiempo restante: ");
-    Serial.println(remainingTime / 1000);
-    waitForMillis(1000); // Espera 1 segundo
-  }
-  return millis() - startTime;
-}
-
-// Función para verificar si el botón fue presionado durante la cuenta regresiva
-bool buttonPressedDuringCountdown(unsigned long countdownTime) {
-  unsigned long startTime = millis();
-  while (millis() - startTime < countdownTime) {
-    if (digitalRead(buttonPin) == HIGH) {
-      return true; // Botón presionado
-      break;
-    }
-  }
-  return false; // Botón no presionado
-}
-
-
 //////////////////////////////********************************************** gsm y pantalla falta pruebas 03/09/2024
+// Todo correcto 3/12/2024 final
 #include <ESP32Servo.h>
 #include "Ucglib.h"
 #include <SPI.h>
@@ -692,6 +626,7 @@ bool inicio=false;
 bool finalcar=false;                //estado de motor final de carrera
 bool ntank=false;                   // estado de nivel del tanque
 bool otrabolsa=false;               // estado de boton bolsa
+float volt;                         //medicion voltaje hall
 
 //#include <TinyGsmClient.h>  //sim800
 //
@@ -742,6 +677,7 @@ ucg.print("tank ");ucg.print(ntank);//ntank
 //****HALL   
   uint16_t value = analogRead (hall);
   uint16_t range = get_gp2d12 (value);
+//  volt=((float)value*(3.3/4096));                       //con version valores esp hall
   Serial.println (value);
   if (value>=2500) {
       ntank=true;
@@ -782,15 +718,6 @@ ucg.print("tank ");ucg.print(ntank);//ntank
     }
   }
 //----------------------------------------------------------------------Descarga de ntank  
- 
-//if ((finalcar)||(ntank)){ 
-//  fallo();
-//  /*finalcar=true;inicio=true;*/}
-//  //else{
-//    //while (millis() - ahora < 4000) {
-//          //finalcar=true;inicio=true;
-//    //}
-//  //}   
     
 Serial.printf("finalcar %d\t",finalcar); Serial.printf(" ntank %d\n",ntank);
 if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
@@ -972,9 +899,10 @@ if ((finalcar==true)&&(ntank==false)){finalcar=false;inicio=false;
 }//FIN LOOP
 
 
-uint16_t get_gp2d12 (uint16_t value) {      //*************HALL
+uint16_t get_gp2d12 (uint16_t value) {              //*************HALL
     if (value < 10) value = 10;
-    return ((67870.0 / (value - 3.0)) - 40.0);
+    return ((67870.0 / (value - 3.0)) - 40.0);    //antiguo codigo hall
+//      return (29.988 * (pow(volt , -1.173)));
 }
 
 void fallo(void){
